@@ -1,17 +1,27 @@
 {
-  "name": "real-estate-server",
+  "name": "server",
   "version": "1.0.0",
-  "description": "Backend server for real estate project",
-  "main": "dist/index.js",
+  "main": "index.js",
+  "type": "module",
   "scripts": {
-    "dev": "ts-node-dev --respawn --transpile-only index.ts",
+    "dev": "nodemon --watch src --ext ts --exec \"node --env-file=.env.development.local --loader ts-node/esm ./src/app.ts\"",
+    "prebuild": "rm -rf dist",
     "build": "tsc",
-    "start": "node dist/index.js"
+    "prestart": "npm run build",
+    "start": "node --env-file=.env dist/app.js"
   },
-  "dependencies": {},
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
   "devDependencies": {
-    "@types/node": "^20.5.0",
-    "typescript": "^5.1.6",
-    "ts-node-dev": "^2.0.0"
+    "@types/node": "^24.5.2",
+    "nodemon": "^3.1.10",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.9.2"
+  },
+  "dependencies": {
+    "mongodb": "^6.20.0",
+    "ts-node": "^10.9.2"
   }
 }
