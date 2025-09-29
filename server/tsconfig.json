@@ -1,32 +1,22 @@
 {
   "compilerOptions": {
-    /* Base Options: */
+    "target": "ES2020",
+    "module": "ESNext",
+    "lib": ["ES2020"],
+    "outDir": "./dist",
+    "rootDir": "./src",
     "esModuleInterop": true,
-    "lib": ["ESNext"],
-    "target": "ESNext",
+    "allowSyntheticDefaultImports": true,
     "skipLibCheck": true,
     "allowJs": true,
     "resolveJsonModule": true,
-    "moduleDetection": "force",
-    "isolatedModules": true,
-    "verbatimModuleSyntax": true,
-    /* Strictness */
-    "strict": true,
-    "noUncheckedIndexedAccess": true,
-    "noImplicitOverride": true,
-    /* Node Options*/
-    "allowImportingTsExtensions": true,
-    "rewriteRelativeImportExtensions": true,
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
-    "rootDir": "./src",
-    "noEmit": false,
-    "outDir": "dist",
-    /* Paths */
-    "baseUrl": "./src",
-    "paths": {
-      "#*": ["*"] // Defines internal path aliases with '#' to avoid conflict with '@'
-    }
+    "moduleResolution": "node",
+    "noImplicitAny": false,
+    "strict": false
   },
-  "include": ["src"]
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"],
+  "ts-node": {
+    "esm": true
+  }
 }
