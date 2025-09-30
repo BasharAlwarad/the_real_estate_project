@@ -1,41 +1,77 @@
-import { createServer } from 'http';
-import { MongoClient } from 'mongodb';
+import express from 'express';
+import cors from 'cors';
+import { MongoClient, ObjectId } from 'mongodb';
 
-const client = new MongoClient(
-  'mongodb+srv://beelwarad52_db_user:RkPaN0oZ21171o1R@cluster0.nkh2rau.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0'
+const app = express();
+const MONGO_URL = process.env.MONGO_URL;
+const PORT = process.env.PORT;
+const client = new MongoClient(MONGO_URL);
+
+// Middleware
+app.use(cors());
+app.use(express.json());
+
+// Initialize database
+await client.connect();
+const db = client.db('listings');
+const houseCollection = db.collection('homes');
+
+// Routes
+app.get('/', (req, res) => {
+  res.send('server is working on 3000');
+});
+
+// GET all listings
+app.get('/listings', async (req, res) => {
+  const listings = await houseCollection.find({}).toArray();
+  res.json(listings);
+});
+
+// GET listing by ID
+app.get('/listings/:id', async (req, res) => {
+  const { id } = req.params;
+
+  const listing = await houseCollection.findOne({
+    _id: ObjectId.createFromHexString(id),
+  });
+
+  res.json(listing);
+});
+
+// POST create new listing
+app.post('/listings', async (req, res) => {
+  const newListing = req.body;
+  const result = await houseCollection.insertOne(newListing);
+  res.status(201).json({
+    message: 'Listing created successfully',
+    id: result.insertedId,
+  });
+});
+
+// PUT update listing by ID
+app.put('/listings/:id', async (req, res) => {
+  const { id } = req.params;
+  const updates = req.body;
+
+  const result = await houseCollection.updateOne(
+    { _id: ObjectId.createFromHexString(id) },
+    { $set: updates }
+  );
+
+  res.json(result);
+});
+
+// DELETE listing by ID
+app.delete('/listings/:id', async (req, res) => {
+  const { id } = req.params;
+
+  const result = await houseCollection.deleteOne({
+    _id: ObjectId.createFromHexString(id),
+  });
+
+  res.json({ message: 'Listing deleted successfully' });
+});
+
+app.listen(PORT, () =>
+  console.log('server is running 🏃 on http://localhost:3000')
 );
-
-const setCorsHeaders = (res) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-};
-
-let db;
-let houseCollection;
-
-const initDb = async () => {
-  await client.connect();
-  db = client.db('listings');
-  houseCollection = db.collection('homes');
-};
-
-const handleRequest = async (req, res) => {
-  setCorsHeaders(res);
-  if (req.url === '/') {
-    res.writeHead(200, { 'Content-Type': 'text/plain' });
-    res.end('server is working on 3000');
-  } else if (req.url == '/listings') {
-    const listings = await houseCollection.find({}).toArray();
-    console.log(listings);
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify(listings));
-  } else {
-    res.writeHead(200, { 'Content-Type': 'text/plain' });
-    res.end('404 this route is invalid');
-  }
-};
-
-const server = createServer(handleRequest);
-await initDb();
-server.listen(3000, () => console.log(`server is running 🏃`));
