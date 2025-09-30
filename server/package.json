@@ -1,27 +1,21 @@
 {
   "name": "server",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "app.js",
   "type": "module",
   "scripts": {
-    "dev": "nodemon --watch src --ext ts --exec \"node --env-file=.env.development.local --loader ts-node/esm ./src/app.ts\"",
-    "prebuild": "rm -rf dist",
-    "build": "tsc",
-    "prestart": "npm run build",
-    "start": "node --env-file=.env dist/app.js"
+    "dev": "nodemon --watch src --ext ts --exec \"node --env-file=.env.development.local --loader ts-node/esm ./src/app.ts\""
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "description": "",
   "devDependencies": {
-    "@types/node": "^24.5.2",
     "nodemon": "^3.1.10",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.9.2"
   },
   "dependencies": {
-    "mongodb": "^6.20.0",
-    "ts-node": "^10.9.2"
+    "mongodb": "^6.20.0"
   }
 }

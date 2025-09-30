@@ -1,57 +1,41 @@
 import { createServer } from 'http';
 import { MongoClient } from 'mongodb';
 
-// Configuration
-const mongoUrl = process.env.MONGO_URL;
-const port = process.env.PORT;
-const dbName = 'houseListings';
-const collectionName = 'houses';
+const client = new MongoClient(
+  'mongodb+srv://beelwarad52_db_user:RkPaN0oZ21171o1R@cluster0.nkh2rau.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0'
+);
 
-// Database client instance
-const client = new MongoClient(mongoUrl);
-
-// Database and collection references
-let db;
-let houseCollection;
-
-// CORS headers setup
 const setCorsHeaders = (res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 };
 
-// Initialize database connection
-const initDB = async () => {
+let db;
+let houseCollection;
+
+const initDb = async () => {
   await client.connect();
-  db = client.db(dbName);
-  houseCollection = db.collection(collectionName);
-  console.log('Connected to MongoDB');
+  db = client.db('listings');
+  houseCollection = db.collection('homes');
 };
 
-// Request handler
 const handleRequest = async (req, res) => {
-  // Add CORS headers
   setCorsHeaders(res);
-
   if (req.url === '/') {
     res.writeHead(200, { 'Content-Type': 'text/plain' });
-    res.end('Real Estate Server');
-  } else if (req.url === '/listings') {
+    res.end('server is working on 3000');
+  } else if (req.url == '/listings') {
     const listings = await houseCollection.find({}).toArray();
+    console.log(listings);
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify(listings));
   } else {
-    res.writeHead(404, { 'Content-Type': 'text/plain' });
-    res.end('Not found');
+    res.writeHead(200, { 'Content-Type': 'text/plain' });
+    res.end('404 this route is invalid');
   }
 };
 
-// Create server
 const server = createServer(handleRequest);
-
-// Start everything
-await initDB();
-server.listen(port, () => {
-  console.log(`Server running at http://localhost:${port}/`);
-});
+await initDb();
+server.listen(3000, () => console.log(`server is running 🏃`));
