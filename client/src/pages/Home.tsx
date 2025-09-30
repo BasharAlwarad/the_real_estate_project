@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import axios from 'axios';
 
 // Types
 interface HouseListing {
@@ -37,21 +38,16 @@ const Home = () => {
 
   // Fetch listings
   const fetchListings = async (): Promise<void> => {
-    const response = await fetch('http://localhost:3000/listings');
-    const data = await response.json();
-    setListings(data);
+    const response = await axios.get('http://localhost:3000/listings');
+    setListings(response.data);
   };
 
   // Create listing
   const createListing = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
-    await fetch('http://localhost:3000/listings', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        ...insertFormData,
-        price: parseFloat(insertFormData.price),
-      }),
+    await axios.post('http://localhost:3000/listings', {
+      ...insertFormData,
+      price: parseFloat(insertFormData.price),
     });
 
     setInsertFormData({ title: '', price: '', imageUrl: '' });
@@ -62,13 +58,9 @@ const Home = () => {
   // Update listing
   const updateListing = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
-    await fetch(`http://localhost:3000/listings/${selectedListing?._id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        ...updateFormData,
-        price: parseFloat(updateFormData.price),
-      }),
+    await axios.put(`http://localhost:3000/listings/${selectedListing?._id}`, {
+      ...updateFormData,
+      price: parseFloat(updateFormData.price),
     });
 
     setShowUpdateForm(false);
@@ -78,7 +70,7 @@ const Home = () => {
 
   // Delete listing
   const deleteListing = async (id: string): Promise<void> => {
-    await fetch(`http://localhost:3000/listings/${id}`, { method: 'DELETE' });
+    await axios.delete(`http://localhost:3000/listings/${id}`);
     fetchListings();
   };
 
