@@ -1,75 +1,52 @@
 import express from 'express';
 import cors from 'cors';
-import { MongoClient, ObjectId } from 'mongodb';
-
+import mongoDbConnect from './db/mongodb.js';
+import {
+  getAllListings,
+  getListingById,
+  createListing,
+  updateListing,
+  deleteListing,
+} from './controllers/listingsControllers.js';
 const app = express();
-const MONGO_URL = process.env.MONGO_URL;
 const PORT = process.env.PORT;
-const client = new MongoClient(MONGO_URL);
 
 // Middleware
 app.use(cors());
 app.use(express.json());
 
 // Initialize database
-await client.connect();
-const db = client.db('listings');
-const houseCollection = db.collection('homes');
-
+mongoDbConnect();
 // Routes
 app.get('/', (req, res) => {
-  res.send('server is working on 3000');
+  try {
+    res.send('server is working on 3000');
+  } catch (error) {
+    console.error(error.message);
+  }
 });
 
 // GET all listings
-app.get('/listings', async (req, res) => {
-  const listings = await houseCollection.find({}).toArray();
-  res.json(listings);
-});
+app.get('/listings', getAllListings);
 
 // GET listing by ID
-app.get('/listings/:id', async (req, res) => {
-  const { id } = req.params;
-
-  const listing = await houseCollection.findOne({
-    _id: ObjectId.createFromHexString(id),
-  });
-
-  res.json(listing);
-});
+app.get('/listings/:id', getListingById);
 
 // POST create new listing
-app.post('/listings', async (req, res) => {
-  const newListing = req.body;
-  const result = await houseCollection.insertOne(newListing);
-  res.status(201).json({
-    message: 'Listing created successfully',
-    id: result.insertedId,
-  });
-});
+app.post('/listings', createListing);
 
 // PUT update listing by ID
-app.put('/listings/:id', async (req, res) => {
-  const { id } = req.params;
-  const updates = req.body;
-
-  const result = await houseCollection.updateOne(
-    { _id: ObjectId.createFromHexString(id) },
-    { $set: updates }
-  );
-
-  res.json(result);
-});
+app.put('/listings/:id', updateListing);
 
 // DELETE listing by ID
-app.delete('/listings/:id', async (req, res) => {
-  const { id } = req.params;
+app.delete('/listings/:id', deleteListing);
 
-  const result = await houseCollection.deleteOne({
-    _id: ObjectId.createFromHexString(id),
+// 404 catch-all route - must be last
+app.use(/.*/, (req, res) => {
+  res.status(404).json({
+    error: 'Route not found',
+    message: `The requested endpoint ${req.originalUrl} does not exist`,
   });
-
-  res.json({ message: 'Listing deleted successfully' });
 });
 
 app.listen(PORT, () =>

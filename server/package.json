@@ -17,8 +17,10 @@
     "typescript": "^5.9.2"
   },
   "dependencies": {
+    "@types/mongoose": "^5.11.96",
     "cors": "^2.8.5",
     "express": "^5.1.0",
-    "mongodb": "^6.20.0"
+    "mongodb": "^6.20.0",
+    "mongoose": "^8.18.3"
   }
 }
