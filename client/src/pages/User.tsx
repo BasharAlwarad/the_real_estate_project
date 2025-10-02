@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
 // Types
@@ -13,9 +13,24 @@ interface User {
 
 const User = () => {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>('');
+
+  // Modal states
+  const [isEditModalOpen, setIsEditModalOpen] = useState<boolean>(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState<boolean>(false);
+  const [isUpdating, setIsUpdating] = useState<boolean>(false);
+  const [isDeleting, setIsDeleting] = useState<boolean>(false);
+
+  // Form states
+  const [formData, setFormData] = useState({
+    userName: '',
+    email: '',
+    image: '',
+  });
+  const [formErrors, setFormErrors] = useState<{ [key: string]: string }>({});
 
   useEffect(() => {
     const fetchUserData = async (): Promise<void> => {
@@ -26,6 +41,12 @@ const User = () => {
         setError('');
         const response = await axios.get(`http://localhost:3000/users/${id}`);
         setUser(response.data);
+        // Initialize form data with current user data
+        setFormData({
+          userName: response.data.userName,
+          email: response.data.email,
+          image: response.data.image || '',
+        });
       } catch (error) {
         console.error('Error fetching user:', error);
         setError('Failed to fetch user details. Please try again.');
@@ -36,6 +57,101 @@ const User = () => {
 
     fetchUserData();
   }, [id]);
+
+  // Handle opening edit modal
+  const handleEditClick = () => {
+    if (user) {
+      setFormData({
+        userName: user.userName,
+        email: user.email,
+        image: user.image || '',
+      });
+      setFormErrors({});
+      setIsEditModalOpen(true);
+    }
+  };
+
+  // Handle form input changes
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+    // Clear error for this field if it exists
+    if (formErrors[name]) {
+      setFormErrors((prev) => ({
+        ...prev,
+        [name]: '',
+      }));
+    }
+  };
+
+  // Validate form data
+  const validateForm = (): boolean => {
+    const errors: { [key: string]: string } = {};
+
+    if (!formData.userName.trim()) {
+      errors.userName = 'Username is required';
+    } else if (formData.userName.trim().length < 2) {
+      errors.userName = 'Username must be at least 2 characters';
+    } else if (formData.userName.trim().length > 50) {
+      errors.userName = 'Username cannot exceed 50 characters';
+    }
+
+    if (!formData.email.trim()) {
+      errors.email = 'Email is required';
+    } else if (
+      !/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(formData.email)
+    ) {
+      errors.email = 'Please enter a valid email address';
+    }
+
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  // Handle update user
+  const handleUpdateUser = async () => {
+    if (!validateForm() || !user) return;
+
+    try {
+      setIsUpdating(true);
+      const response = await axios.put(
+        `http://localhost:3000/users/${user._id}`,
+        formData
+      );
+      setUser(response.data.user);
+      setIsEditModalOpen(false);
+      setError('');
+    } catch (error) {
+      console.error('Error updating user:', error);
+      if (axios.isAxiosError(error) && error.response?.data?.details) {
+        setError(error.response.data.details);
+      } else {
+        setError('Failed to update user. Please try again.');
+      }
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  // Handle delete user
+  const handleDeleteUser = async () => {
+    if (!user) return;
+
+    try {
+      setIsDeleting(true);
+      await axios.delete(`http://localhost:3000/users/${user._id}`);
+      navigate('/users');
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      setError('Failed to delete user. Please try again.');
+      setIsDeleteModalOpen(false);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   const formatDate = (dateString?: string): string => {
     if (!dateString) return 'Unknown';
@@ -365,6 +481,48 @@ const User = () => {
                 </Link>
 
                 <button
+                  className="btn btn-info gap-2"
+                  onClick={handleEditClick}
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                    />
+                  </svg>
+                  Edit User
+                </button>
+
+                <button
+                  className="btn btn-error gap-2"
+                  onClick={() => setIsDeleteModalOpen(true)}
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                    />
+                  </svg>
+                  Delete User
+                </button>
+
+                <button
                   className="btn btn-secondary gap-2"
                   onClick={() =>
                     (window.location.href = `mailto:${user.email}`)
@@ -409,6 +567,193 @@ const User = () => {
           </div>
         </div>
       </div>
+
+      {/* Edit User Modal */}
+      <dialog
+        className={`modal ${isEditModalOpen ? 'modal-open' : ''}`}
+        open={isEditModalOpen}
+      >
+        <div className="modal-box w-11/12 max-w-2xl">
+          <h3 className="font-bold text-lg mb-4">Edit User Information</h3>
+
+          {error && (
+            <div className="alert alert-error mb-4">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="stroke-current shrink-0 h-6 w-6"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+              <span>{error}</span>
+            </div>
+          )}
+
+          <div className="space-y-4">
+            {/* Username Input */}
+            <div className="form-control">
+              <label className="label">
+                <span className="label-text">Username</span>
+              </label>
+              <input
+                type="text"
+                name="userName"
+                value={formData.userName}
+                onChange={handleInputChange}
+                className={`input input-bordered ${
+                  formErrors.userName ? 'input-error' : ''
+                }`}
+                placeholder="Enter username"
+              />
+              {formErrors.userName && (
+                <label className="label">
+                  <span className="label-text-alt text-error">
+                    {formErrors.userName}
+                  </span>
+                </label>
+              )}
+            </div>
+
+            {/* Email Input */}
+            <div className="form-control">
+              <label className="label">
+                <span className="label-text">Email</span>
+              </label>
+              <input
+                type="email"
+                name="email"
+                value={formData.email}
+                onChange={handleInputChange}
+                className={`input input-bordered ${
+                  formErrors.email ? 'input-error' : ''
+                }`}
+                placeholder="Enter email"
+              />
+              {formErrors.email && (
+                <label className="label">
+                  <span className="label-text-alt text-error">
+                    {formErrors.email}
+                  </span>
+                </label>
+              )}
+            </div>
+
+            {/* Image URL Input */}
+            <div className="form-control">
+              <label className="label">
+                <span className="label-text">Profile Image URL (Optional)</span>
+              </label>
+              <input
+                type="url"
+                name="image"
+                value={formData.image}
+                onChange={handleInputChange}
+                className="input input-bordered"
+                placeholder="Enter image URL or leave empty for default"
+              />
+              <label className="label">
+                <span className="label-text-alt">
+                  Leave empty to use default avatar
+                </span>
+              </label>
+            </div>
+          </div>
+
+          <div className="modal-action">
+            <button
+              className="btn btn-ghost"
+              onClick={() => setIsEditModalOpen(false)}
+              disabled={isUpdating}
+            >
+              Cancel
+            </button>
+            <button
+              className="btn btn-primary"
+              onClick={handleUpdateUser}
+              disabled={isUpdating}
+            >
+              {isUpdating ? (
+                <>
+                  <span className="loading loading-spinner loading-sm"></span>
+                  Updating...
+                </>
+              ) : (
+                'Update User'
+              )}
+            </button>
+          </div>
+        </div>
+        <form method="dialog" className="modal-backdrop">
+          <button onClick={() => setIsEditModalOpen(false)}>close</button>
+        </form>
+      </dialog>
+
+      {/* Delete Confirmation Modal */}
+      <dialog
+        className={`modal ${isDeleteModalOpen ? 'modal-open' : ''}`}
+        open={isDeleteModalOpen}
+      >
+        <div className="modal-box">
+          <h3 className="font-bold text-lg">Confirm Delete</h3>
+          <p className="py-4">
+            Are you sure you want to delete the user{' '}
+            <span className="font-semibold text-error">"{user?.userName}"</span>
+            ? This action cannot be undone.
+          </p>
+
+          {error && (
+            <div className="alert alert-error mb-4">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="stroke-current shrink-0 h-6 w-6"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+              <span>{error}</span>
+            </div>
+          )}
+
+          <div className="modal-action">
+            <button
+              className="btn btn-ghost"
+              onClick={() => setIsDeleteModalOpen(false)}
+              disabled={isDeleting}
+            >
+              Cancel
+            </button>
+            <button
+              className="btn btn-error"
+              onClick={handleDeleteUser}
+              disabled={isDeleting}
+            >
+              {isDeleting ? (
+                <>
+                  <span className="loading loading-spinner loading-sm"></span>
+                  Deleting...
+                </>
+              ) : (
+                'Delete User'
+              )}
+            </button>
+          </div>
+        </div>
+        <form method="dialog" className="modal-backdrop">
+          <button onClick={() => setIsDeleteModalOpen(false)}>close</button>
+        </form>
+      </dialog>
     </div>
   );
 };

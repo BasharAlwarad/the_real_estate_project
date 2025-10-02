@@ -57,6 +57,8 @@ const Listing = () => {
           {listing.imageUrl && (
             <figure>
               <img
+                width={200}
+                height={200}
                 src={listing.imageUrl}
                 alt={listing.title}
                 className="w-full h-8 object-cover rounded-t-lg"

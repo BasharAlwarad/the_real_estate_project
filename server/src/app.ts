@@ -1,21 +1,8 @@
 import express from 'express';
 import cors from 'cors';
 import mongoDbConnect from './db/mongodb.js';
-import {
-  getAllListings,
-  getListingById,
-  createListing,
-  updateListing,
-  deleteListing,
-} from './controllers/listingsControllers.js';
-
-import {
-  getAllUsers,
-  getUserById,
-  createUser,
-  updateUser,
-  deleteUser,
-} from './controllers/UsersControllers.js';
+import usersRouter from './routes/UsersRoutes.js';
+import listingsRouter from './routes/ListingsRoutes.js';
 
 const app = express();
 const PORT = process.env.PORT;
@@ -35,35 +22,8 @@ app.get('/', (req, res) => {
   }
 });
 
-// GET all listings
-app.get('/listings', getAllListings);
-
-// GET listing by ID
-app.get('/listings/:id', getListingById);
-
-// POST create new listing
-app.post('/listings', createListing);
-
-// PUT update listing by ID
-app.put('/listings/:id', updateListing);
-
-// DELETE listing by ID
-app.delete('/listings/:id', deleteListing);
-
-// GET all users
-app.get('/users', getAllUsers);
-
-// GET user by ID
-app.get('/users/:id', getUserById);
-
-// POST create new user
-app.post('/users', createUser);
-
-// PUT update user by ID
-app.put('/users/:id', updateUser);
-
-// DELETE user by ID
-app.delete('/users/:id', deleteUser);
+app.use(`/listings`, listingsRouter);
+app.use(`/users`, usersRouter);
 
 // 404 catch-all route - must be last
 app.use(/.*/, (req, res) => {
