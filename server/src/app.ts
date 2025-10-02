@@ -8,6 +8,15 @@ import {
   updateListing,
   deleteListing,
 } from './controllers/listingsControllers.js';
+
+import {
+  getAllUsers,
+  getUserById,
+  createUser,
+  updateUser,
+  deleteUser,
+} from './controllers/UsersControllers.js';
+
 const app = express();
 const PORT = process.env.PORT;
 
@@ -40,6 +49,21 @@ app.put('/listings/:id', updateListing);
 
 // DELETE listing by ID
 app.delete('/listings/:id', deleteListing);
+
+// GET all users
+app.get('/users', getAllUsers);
+
+// GET user by ID
+app.get('/users/:id', getUserById);
+
+// POST create new user
+app.post('/users', createUser);
+
+// PUT update user by ID
+app.put('/users/:id', updateUser);
+
+// DELETE user by ID
+app.delete('/users/:id', deleteUser);
 
 // 404 catch-all route - must be last
 app.use(/.*/, (req, res) => {

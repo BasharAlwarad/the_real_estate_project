@@ -25,7 +25,7 @@ const ListingSchema: Schema = new Schema(
     },
   },
   {
-    timestamps: true, // This will add createdAt and updatedAt automatically
+    timestamps: true,
   }
 );
 
