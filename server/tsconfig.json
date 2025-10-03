@@ -18,7 +18,8 @@
       "#controllers": ["./controllers/index.ts"],
       "#db": ["./db/index.ts"],
       "#models": ["./models/index.ts"],
-      "#routes": ["./routes/index.ts"]
+      "#routes": ["./routes/index.ts"],
+      "#utils": ["./utils/index.ts"]
     }
   },
   "include": ["src/**/*"],

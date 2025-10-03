@@ -7,7 +7,8 @@
     "#controllers": "./src/controllers/index.ts",
     "#db": "./src/db/index.ts",
     "#models": "./src/models/index.ts",
-    "#routes": "./src/routes/index.ts"
+    "#routes": "./src/routes/index.ts",
+    "#utils": "./src/utils/index.ts"
   },
   "scripts": {
     "start": "node --env-file=.env dist/app.js",
