@@ -12,7 +12,14 @@
     "resolveJsonModule": true,
     "moduleResolution": "node",
     "noImplicitAny": false,
-    "strict": false
+    "strict": false,
+    "baseUrl": "./src",
+    "paths": {
+      "#controllers": ["./controllers/index.ts"],
+      "#db": ["./db/index.ts"],
+      "#models": ["./models/index.ts"],
+      "#routes": ["./routes/index.ts"]
+    }
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"],

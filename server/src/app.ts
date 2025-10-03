@@ -1,8 +1,7 @@
 import express from 'express';
 import cors from 'cors';
-import mongoDbConnect from './db/mongodb.js';
-import usersRouter from './routes/UsersRoutes.js';
-import listingsRouter from './routes/ListingsRoutes.js';
+import { mongoDBConnect } from '#db';
+import { userRouter, listingRouter } from '#routes';
 
 const app = express();
 const PORT = process.env.PORT;
@@ -12,7 +11,7 @@ app.use(cors());
 app.use(express.json());
 
 // Initialize database
-mongoDbConnect();
+mongoDBConnect();
 // Routes
 app.get('/', (req, res) => {
   try {
@@ -22,8 +21,8 @@ app.get('/', (req, res) => {
   }
 });
 
-app.use(`/listings`, listingsRouter);
-app.use(`/users`, usersRouter);
+app.use(`/listings`, listingRouter);
+app.use(`/users`, userRouter);
 
 // 404 catch-all route - must be last
 app.use(/.*/, (req, res) => {

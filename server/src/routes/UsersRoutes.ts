@@ -5,14 +5,12 @@ import {
   createUser,
   updateUser,
   deleteUser,
-} from '../controllers/UsersControllers.js';
+} from '#controllers';
 
-const userRouter = Router();
+export const userRouter = Router();
 
 userRouter.post(`/`, createUser);
 userRouter.get(`/`, getAllUsers);
 userRouter.get(`/:id`, getUserById);
 userRouter.put(`/:id`, updateUser);
 userRouter.delete(`/:id`, deleteUser);
-
-export default userRouter;

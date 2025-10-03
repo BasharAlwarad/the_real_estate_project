@@ -1,4 +1,4 @@
-import { Listing } from '../models/Listing.js';
+import { Listing } from '#models';
 import mongoose from 'mongoose';
 
 export const getAllListings = async (req, res) => {

@@ -3,8 +3,18 @@
   "version": "1.0.0",
   "main": "app.js",
   "type": "module",
+  "imports": {
+    "#controllers": "./src/controllers/index.ts",
+    "#db": "./src/db/index.ts",
+    "#models": "./src/models/index.ts",
+    "#routes": "./src/routes/index.ts"
+  },
   "scripts": {
-    "dev": "nodemon --watch src --ext ts --exec \"node --env-file=.env.development.local --loader ts-node/esm ./src/app.ts\""
+    "start": "node --env-file=.env dist/app.js",
+    "dev": "cross-env NODE_ENV=development nodemon --watch src --ext ts --exec \"node --env-file=.env.development.local --loader ts-node/esm ./src/app.ts\"",
+    "build": "tsc",
+    "prestart": "npm run build",
+    "prebuild": "rm -rf dist"
   },
   "keywords": [],
   "author": "",
@@ -12,6 +22,7 @@
   "description": "",
   "devDependencies": {
     "@types/cors": "^2.8.19",
+    "cross-env": "^10.1.0",
     "nodemon": "^3.1.10",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.9.2"
