@@ -1,7 +1,7 @@
 export const errorHandler = (err, req, res, next) => {
   // Log error in development
   if (process.env.NODE_ENV !== 'production') {
-    console.error(`\x1b[31m${err.stack}\x1b[0m`);
+    console.error(`🚩🚩🚩\x1b[31m${err.stack}\x1b[0m`);
   }
 
   // Handle custom errors with status codes
