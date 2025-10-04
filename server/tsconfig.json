@@ -17,8 +17,10 @@
     "paths": {
       "#controllers": ["./controllers/index.ts"],
       "#db": ["./db/index.ts"],
+      "#middlewares": ["./middlewares/index.ts"],
       "#models": ["./models/index.ts"],
       "#routes": ["./routes/index.ts"],
+      "#schemas": ["./schemas/index.ts"],
       "#utils": ["./utils/index.ts"]
     }
   },

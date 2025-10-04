@@ -2,15 +2,15 @@ import { User } from '#models';
 import { httpErrors, asyncHandler } from '#utils';
 import mongoose from 'mongoose';
 
-export const getAllUsers = asyncHandler(async (req, res, next) => {
-  const users = await User.find({});
+export const getAllUsers = asyncHandler(async (req, res) => {
+  const users = await User.find();
   if (!users || users.length === 0) {
     httpErrors.notFound('No users found');
   }
   res.json(users);
 });
 
-export const getUserById = asyncHandler(async (req, res, next) => {
+export const getUserById = asyncHandler(async (req, res) => {
   const { id } = req.params;
 
   if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -26,24 +26,19 @@ export const getUserById = asyncHandler(async (req, res, next) => {
   res.json(user);
 });
 
-export const createUser = asyncHandler(async (req, res, next) => {
-  const newUser = new User(req.body);
-  const savedUser = await newUser.save();
-  res.status(201).json({
-    message: 'User created successfully',
-    user: savedUser,
-  });
+export const createUser = asyncHandler(async (req, res) => {
+  const newUser = await User.create(req.body);
+  res.status(201).json(newUser);
 });
 
-export const updateUser = asyncHandler(async (req, res, next) => {
+export const updateUser = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const updates = req.body;
 
   if (!mongoose.Types.ObjectId.isValid(id)) {
     httpErrors.badRequest('Invalid user ID');
   }
 
-  const updatedUser = await User.findByIdAndUpdate(id, updates, {
+  const updatedUser = await User.findByIdAndUpdate(id, req.body, {
     new: true,
     runValidators: true,
   });
@@ -52,13 +47,10 @@ export const updateUser = asyncHandler(async (req, res, next) => {
     httpErrors.notFound('User not found');
   }
 
-  res.json({
-    message: 'User updated successfully',
-    user: updatedUser,
-  });
+  res.json(updatedUser);
 });
 
-export const deleteUser = asyncHandler(async (req, res, next) => {
+export const deleteUser = asyncHandler(async (req, res) => {
   const { id } = req.params;
 
   if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -73,6 +65,5 @@ export const deleteUser = asyncHandler(async (req, res, next) => {
 
   res.json({
     message: 'User deleted successfully',
-    user: deletedUser,
   });
 });

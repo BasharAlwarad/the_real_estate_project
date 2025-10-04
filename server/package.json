@@ -6,8 +6,10 @@
   "imports": {
     "#controllers": "./src/controllers/index.ts",
     "#db": "./src/db/index.ts",
+    "#middlewares": "./src/middlewares/index.ts",
     "#models": "./src/models/index.ts",
     "#routes": "./src/routes/index.ts",
+    "#schemas": "./src/schemas/index.ts",
     "#utils": "./src/utils/index.ts"
   },
   "scripts": {
@@ -33,6 +35,7 @@
     "cors": "^2.8.5",
     "express": "^5.1.0",
     "mongodb": "^6.20.0",
-    "mongoose": "^8.18.3"
+    "mongoose": "^8.18.3",
+    "zod": "^4.1.11"
   }
 }

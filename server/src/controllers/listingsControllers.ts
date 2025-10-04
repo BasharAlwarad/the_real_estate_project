@@ -2,12 +2,12 @@ import { Listing } from '#models';
 import { httpErrors, asyncHandler } from '#utils';
 import mongoose from 'mongoose';
 
-export const getAllListings = asyncHandler(async (req, res, next) => {
-  const listings = await Listing.find({});
+export const getAllListings = asyncHandler(async (req, res) => {
+  const listings = await Listing.find();
   res.json(listings);
 });
 
-export const getListingById = asyncHandler(async (req, res, next) => {
+export const getListingById = asyncHandler(async (req, res) => {
   const { id } = req.params;
 
   if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -23,24 +23,19 @@ export const getListingById = asyncHandler(async (req, res, next) => {
   res.json(listing);
 });
 
-export const createListing = asyncHandler(async (req, res, next) => {
-  const newListing = new Listing(req.body);
-  const savedListing = await newListing.save();
-  res.status(201).json({
-    message: 'Listing created successfully',
-    listing: savedListing,
-  });
+export const createListing = asyncHandler(async (req, res) => {
+  const newListing = await Listing.create(req.body);
+  res.status(201).json(newListing);
 });
 
-export const updateListing = asyncHandler(async (req, res, next) => {
+export const updateListing = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const updates = req.body;
 
   if (!mongoose.Types.ObjectId.isValid(id)) {
     httpErrors.badRequest('Invalid listing ID');
   }
 
-  const updatedListing = await Listing.findByIdAndUpdate(id, updates, {
+  const updatedListing = await Listing.findByIdAndUpdate(id, req.body, {
     new: true,
     runValidators: true,
   });
@@ -49,13 +44,10 @@ export const updateListing = asyncHandler(async (req, res, next) => {
     httpErrors.notFound('Listing not found');
   }
 
-  res.json({
-    message: 'Listing updated successfully',
-    listing: updatedListing,
-  });
+  res.json(updatedListing);
 });
 
-export const deleteListing = asyncHandler(async (req, res, next) => {
+export const deleteListing = asyncHandler(async (req, res) => {
   const { id } = req.params;
 
   if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -70,6 +62,5 @@ export const deleteListing = asyncHandler(async (req, res, next) => {
 
   res.json({
     message: 'Listing deleted successfully',
-    listing: deletedListing,
   });
 });

@@ -7,13 +7,13 @@ interface HouseListing {
   _id: string;
   title: string;
   price: number;
-  imageUrl?: string;
+  image?: string;
 }
 
 interface FormData {
   title: string;
   price: string;
-  imageUrl: string;
+  image: string;
 }
 
 const Home = () => {
@@ -27,13 +27,13 @@ const Home = () => {
   const [insertFormData, setInsertFormData] = useState<FormData>({
     title: '',
     price: '',
-    imageUrl: '',
+    image: '',
   });
 
   const [updateFormData, setUpdateFormData] = useState<FormData>({
     title: '',
     price: '',
-    imageUrl: '',
+    image: '',
   });
 
   // Fetch listings
@@ -50,7 +50,7 @@ const Home = () => {
       price: parseFloat(insertFormData.price),
     });
 
-    setInsertFormData({ title: '', price: '', imageUrl: '' });
+    setInsertFormData({ title: '', price: '', image: '' });
     setShowInsertForm(false);
     fetchListings();
   };
@@ -80,7 +80,7 @@ const Home = () => {
     setUpdateFormData({
       title: listing.title,
       price: listing.price.toString(),
-      imageUrl: listing.imageUrl || '',
+      image: listing.image || '',
     });
     setShowUpdateForm(true);
   };
@@ -274,10 +274,10 @@ const Home = () => {
                   key={listing._id}
                   className="card bg-base-100 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-base-300/20"
                 >
-                  {listing.imageUrl ? (
+                  {listing.image ? (
                     <figure className="relative overflow-hidden">
                       <img
-                        src={listing.imageUrl}
+                        src={listing.image}
                         alt={listing.title}
                         className="w-full h-64 object-cover transition-transform duration-300 hover:scale-110"
                       />
@@ -533,11 +533,11 @@ const Home = () => {
                     type="url"
                     placeholder="https://example.com/image.jpg"
                     className="input input-bordered w-full focus:input-primary"
-                    value={insertFormData.imageUrl}
+                    value={insertFormData.image}
                     onChange={(e) =>
                       setInsertFormData({
                         ...insertFormData,
-                        imageUrl: e.target.value,
+                        image: e.target.value,
                       })
                     }
                   />
@@ -682,11 +682,11 @@ const Home = () => {
                     type="url"
                     placeholder="https://example.com/image.jpg"
                     className="input input-bordered w-full focus:input-secondary"
-                    value={updateFormData.imageUrl}
+                    value={updateFormData.image}
                     onChange={(e) =>
                       setUpdateFormData({
                         ...updateFormData,
-                        imageUrl: e.target.value,
+                        image: e.target.value,
                       })
                     }
                   />

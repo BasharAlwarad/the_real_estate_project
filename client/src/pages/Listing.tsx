@@ -6,7 +6,7 @@ interface HouseListing {
   _id: string;
   title: string;
   price: number;
-  imageUrl?: string;
+  image?: string;
 }
 
 const Listing = () => {
@@ -54,12 +54,12 @@ const Listing = () => {
         </div>
 
         <div className="card bg-base-100 shadow-xl">
-          {listing.imageUrl && (
+          {listing.image && (
             <figure>
               <img
                 width={200}
                 height={200}
-                src={listing.imageUrl}
+                src={listing.image}
                 alt={listing.title}
                 className="w-full h-8 object-cover rounded-t-lg"
               />
