@@ -14,7 +14,7 @@
   },
   "scripts": {
     "start": "node --env-file=.env dist/app.js",
-    "dev": "cross-env NODE_ENV=development nodemon --watch src --ext ts --exec \"node --env-file=.env.development.local --loader ts-node/esm ./src/app.ts\"",
+    "dev": "cross-env NODE_ENV=development nodemon --watch src --ext ts --exec \"tsx --env-file=.env.development.local ./src/app.ts\"",
     "build": "tsc",
     "prestart": "npm run build",
     "prebuild": "rm -rf dist"
@@ -32,8 +32,10 @@
   },
   "dependencies": {
     "@types/mongoose": "^5.11.96",
+    "cloudinary": "^2.7.0",
     "cors": "^2.8.5",
     "express": "^5.1.0",
+    "formidable": "^3.5.4",
     "mongodb": "^6.20.0",
     "mongoose": "^8.18.3",
     "zod": "^4.1.11"

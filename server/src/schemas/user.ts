@@ -7,25 +7,6 @@ export const userInputSchema = z
       .string({ message: 'Username must be a string' })
       .min(2, { message: 'Username must be at least 2 characters' })
       .max(50, { message: 'Username cannot exceed 50 characters' })
-      .trim(),
-    email: z
-      .string({ message: 'Email must be a string' })
-      .email({ message: 'Please enter a valid email' })
-      .toLowerCase()
-      .trim(),
-    image: z.string().url('Invalid image URL').optional(),
-    password: z
-      .string({ message: 'Password must be a string' })
-      .min(6, { message: 'Password must be at least 6 characters' }),
-  })
-  .strict();
-
-export const userUpdateSchema = z
-  .object({
-    userName: z
-      .string({ message: 'Username must be a string' })
-      .min(2, { message: 'Username must be at least 2 characters' })
-      .max(50, { message: 'Username cannot exceed 50 characters' })
       .trim()
       .optional(),
     email: z
@@ -34,7 +15,12 @@ export const userUpdateSchema = z
       .toLowerCase()
       .trim()
       .optional(),
-    image: z.string().url('Invalid image URL').optional(),
+    image: z
+      .union([
+        z.string().url('Invalid image URL'),
+        z.string().min(1, 'Image cannot be empty'),
+      ])
+      .optional(),
     password: z
       .string({ message: 'Password must be a string' })
       .min(6, { message: 'Password must be at least 6 characters' })
@@ -42,10 +28,30 @@ export const userUpdateSchema = z
   })
   .strict();
 
+// Schema for user creation - requires essential fields
+export const userCreateSchema = userInputSchema.extend({
+  userName: z
+    .string({ message: 'Username must be a string' })
+    .min(2, { message: 'Username must be at least 2 characters' })
+    .max(50, { message: 'Username cannot exceed 50 characters' })
+    .trim(),
+  email: z
+    .string({ message: 'Email must be a string' })
+    .email({ message: 'Please enter a valid email' })
+    .toLowerCase()
+    .trim(),
+  password: z
+    .string({ message: 'Password must be a string' })
+    .min(6, { message: 'Password must be at least 6 characters' }),
+});
+
+// Alias for updates (same as base schema with all optional fields)
+export const userUpdateSchema = userInputSchema;
+
 export const userSchema = z
   .object({
     _id: z.instanceof(Types.ObjectId),
-    ...userInputSchema.shape,
+    ...userCreateSchema.shape,
     createdAt: z.date(),
     updatedAt: z.date(),
   })

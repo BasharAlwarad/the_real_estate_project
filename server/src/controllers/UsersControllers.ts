@@ -3,7 +3,7 @@ import { httpErrors, asyncHandler } from '#utils';
 import mongoose from 'mongoose';
 
 export const getAllUsers = asyncHandler(async (req, res) => {
-  const users = await User.find();
+  const users = await User.find().lean().sort({ createdAt: -1 });
   if (!users || users.length === 0) {
     httpErrors.notFound('No users found');
   }
@@ -17,7 +17,7 @@ export const getUserById = asyncHandler(async (req, res) => {
     httpErrors.badRequest('Invalid user ID');
   }
 
-  const user = await User.findById(id);
+  const user = await User.findById(id).lean();
 
   if (!user) {
     httpErrors.notFound('User not found');
@@ -41,7 +41,7 @@ export const updateUser = asyncHandler(async (req, res) => {
   const updatedUser = await User.findByIdAndUpdate(id, req.body, {
     new: true,
     runValidators: true,
-  });
+  }).lean();
 
   if (!updatedUser) {
     httpErrors.notFound('User not found');

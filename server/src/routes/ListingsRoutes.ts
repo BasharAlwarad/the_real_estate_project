@@ -7,17 +7,17 @@ import {
   deleteListing,
 } from '#controllers';
 import { validateBodyZod } from '#middlewares';
-import { listingInputSchema } from '#schemas';
+import { listingCreateSchema, listingUpdateSchema } from '#schemas';
 
 export const listingRouter = Router();
 
 listingRouter
   .route('/')
   .get(getAllListings)
-  .post(validateBodyZod(listingInputSchema), createListing);
+  .post(validateBodyZod(listingCreateSchema), createListing);
 
 listingRouter
   .route('/:id')
   .get(getListingById)
-  .put(validateBodyZod(listingInputSchema), updateListing)
+  .put(validateBodyZod(listingUpdateSchema), updateListing)
   .delete(deleteListing);

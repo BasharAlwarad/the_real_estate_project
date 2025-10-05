@@ -1,6 +1,6 @@
 import { httpErrors } from '#utils';
 
-const validateBodyZod = (zodSchema) => (req, res, next) => {
+export const validateBodyZod = (zodSchema) => (req, res, next) => {
   const result = zodSchema.safeParse(req.body);
   if (!result.success) {
     // Format Zod validation errors

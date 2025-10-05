@@ -6,18 +6,28 @@ import {
   updateUser,
   deleteUser,
 } from '#controllers';
-import { validateBodyZod } from '#middlewares';
-import { userInputSchema, userUpdateSchema } from '#schemas';
+import { validateBodyZod, cloudUploader, formMiddleWare } from '#middlewares';
+import { userCreateSchema, userUpdateSchema } from '#schemas';
 
 export const userRouter = Router();
 
 userRouter
   .route('/')
   .get(getAllUsers)
-  .post(validateBodyZod(userInputSchema), createUser);
+  .post(
+    formMiddleWare,
+    cloudUploader,
+    validateBodyZod(userCreateSchema),
+    createUser
+  );
 
 userRouter
   .route('/:id')
   .get(getUserById)
-  .put(validateBodyZod(userUpdateSchema), updateUser)
+  .put(
+    formMiddleWare,
+    cloudUploader,
+    validateBodyZod(userUpdateSchema),
+    updateUser
+  )
   .delete(deleteUser);
