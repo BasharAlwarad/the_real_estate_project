@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
@@ -31,6 +31,15 @@ const User = () => {
     image: '',
   });
   const [formErrors, setFormErrors] = useState<{ [key: string]: string }>({});
+
+  // Image handling states
+  const [imageOption, setImageOption] = useState<'default' | 'url' | 'upload'>(
+    'default'
+  );
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>('');
+  const [imageUrl, setImageUrl] = useState<string>('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const fetchUserData = async (): Promise<void> => {
@@ -67,6 +76,17 @@ const User = () => {
         image: user.image || '',
       });
       setFormErrors({});
+
+      // Initialize image states based on current user image
+      if (user.image) {
+        setImageOption('url');
+        setImageUrl(user.image);
+      } else {
+        setImageOption('default');
+      }
+      setImageFile(null);
+      setImagePreview('');
+
       setIsEditModalOpen(true);
     }
   };
@@ -85,6 +105,36 @@ const User = () => {
         [name]: '',
       }));
     }
+  };
+
+  // Handle image option change
+  const handleImageOptionChange = (option: 'default' | 'url' | 'upload') => {
+    setImageOption(option);
+    setImageFile(null);
+    setImagePreview('');
+    setImageUrl('');
+    setFormData((prev) => ({ ...prev, image: '' }));
+  };
+
+  // Handle image file selection and preview
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setImageFile(file);
+      setImagePreview(URL.createObjectURL(file));
+    }
+  };
+
+  // Handle image upload click
+  const handleImageUploadClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  // Handle URL input change
+  const handleImageUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const url = e.target.value;
+    setImageUrl(url);
+    setFormData((prev) => ({ ...prev, image: url }));
   };
 
   // Validate form data
@@ -117,13 +167,51 @@ const User = () => {
 
     try {
       setIsUpdating(true);
-      const response = await axios.put(
-        `http://localhost:3000/users/${user._id}`,
-        formData
-      );
-      setUser(response.data.user);
+
+      let response;
+
+      if (imageOption === 'upload' && imageFile) {
+        // Use FormData for file upload
+        const formDataPayload = new FormData();
+        formDataPayload.append('userName', formData.userName);
+        formDataPayload.append('email', formData.email);
+        formDataPayload.append('image', imageFile);
+
+        response = await axios.put(
+          `http://localhost:3000/users/${user._id}`,
+          formDataPayload,
+          {
+            headers: { 'Content-Type': 'multipart/form-data' },
+          }
+        );
+      } else {
+        // Use JSON for URL or default image
+        const payload = {
+          userName: formData.userName,
+          email: formData.email,
+          image:
+            imageOption === 'default'
+              ? ''
+              : imageOption === 'url'
+              ? imageUrl
+              : '',
+        };
+
+        response = await axios.put(
+          `http://localhost:3000/users/${user._id}`,
+          payload
+        );
+      }
+
+      setUser(response.data);
       setIsEditModalOpen(false);
       setError('');
+
+      // Reset image states
+      setImageFile(null);
+      setImagePreview('');
+      setImageUrl('');
+      setImageOption('default');
     } catch (error) {
       console.error('Error updating user:', error);
       if (axios.isAxiosError(error) && error.response?.data?.details) {
@@ -647,19 +735,105 @@ const User = () => {
             {/* Image URL Input */}
             <div className="form-control">
               <label className="label">
-                <span className="label-text">Profile Image URL (Optional)</span>
+                <span className="label-text">Profile Image</span>
               </label>
-              <input
-                type="url"
-                name="image"
-                value={formData.image}
-                onChange={handleInputChange}
-                className="input input-bordered"
-                placeholder="Enter image URL or leave empty for default"
-              />
+
+              {/* Image Option Selector */}
+              <div className="flex gap-2 mb-4">
+                <button
+                  type="button"
+                  className={`btn btn-sm ${
+                    imageOption === 'default' ? 'btn-primary' : 'btn-outline'
+                  }`}
+                  onClick={() => handleImageOptionChange('default')}
+                >
+                  Default
+                </button>
+                <button
+                  type="button"
+                  className={`btn btn-sm ${
+                    imageOption === 'url' ? 'btn-primary' : 'btn-outline'
+                  }`}
+                  onClick={() => handleImageOptionChange('url')}
+                >
+                  URL
+                </button>
+                <button
+                  type="button"
+                  className={`btn btn-sm ${
+                    imageOption === 'upload' ? 'btn-primary' : 'btn-outline'
+                  }`}
+                  onClick={() => handleImageOptionChange('upload')}
+                >
+                  Upload File
+                </button>
+              </div>
+
+              {/* Conditional Image Input */}
+              {imageOption === 'url' && (
+                <input
+                  type="url"
+                  value={imageUrl}
+                  onChange={handleImageUrlChange}
+                  className="input input-bordered"
+                  placeholder="Enter image URL"
+                />
+              )}
+
+              {imageOption === 'upload' && (
+                <div className="space-y-4">
+                  <button
+                    type="button"
+                    onClick={handleImageUploadClick}
+                    className="btn btn-secondary btn-block"
+                  >
+                    Choose Image File
+                  </button>
+
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    className="hidden"
+                  />
+
+                  {imagePreview && (
+                    <div className="flex justify-center">
+                      <img
+                        src={imagePreview}
+                        alt="Image Preview"
+                        className="w-32 h-32 object-cover rounded-full border-4 border-primary"
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {imageOption === 'default' && (
+                <div className="alert alert-info">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    className="stroke-current shrink-0 w-6 h-6"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    ></path>
+                  </svg>
+                  <span>
+                    Default avatar will be used (first letter of username)
+                  </span>
+                </div>
+              )}
+
               <label className="label">
                 <span className="label-text-alt">
-                  Leave empty to use default avatar
+                  Choose how you want to set your profile image
                 </span>
               </label>
             </div>
