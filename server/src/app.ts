@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import { mongoDBConnect } from '#db';
 import { userRouter, listingRouter } from '#routes';
+import { errorHandler } from './middlewares/errorHandler.js';
 
 const app = express();
 const PORT = process.env.PORT;
@@ -21,8 +22,21 @@ app.get('/', (req, res) => {
   }
 });
 
+// Test route for error handling
+app.get('/test-error', (req, res, next) => {
+  try {
+    // Simulate an error
+    throw new Error('This is a test error');
+  } catch (error) {
+    next(error);
+  }
+});
+
 app.use(`/listings`, listingRouter);
 app.use(`/users`, userRouter);
+
+// Error handling middleware - must be after routes
+app.use(errorHandler);
 
 // 404 catch-all route - must be last
 app.use(/.*/, (req, res) => {
