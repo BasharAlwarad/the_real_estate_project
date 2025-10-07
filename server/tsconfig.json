@@ -19,7 +19,8 @@
       "#db": ["./db/index.ts"],
       "#models": ["./models/index.ts"],
       "#routes": ["./routes/index.ts"],
-      "#utils": ["./utils/index.ts"]
+      "#utils": ["./utils/index.ts"],
+      "#middlewares": ["./middlewares/index.ts"]
     }
   },
   "include": ["src/**/*"],

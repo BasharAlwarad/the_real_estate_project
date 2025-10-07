@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import { mongoDBConnect } from '#db';
 import { userRouter, listingRouter } from '#routes';
-import { errorHandler } from './middlewares/errorHandler.js';
+import { errorHandler } from '#middlewares';
 
 const app = express();
 const PORT = process.env.PORT;

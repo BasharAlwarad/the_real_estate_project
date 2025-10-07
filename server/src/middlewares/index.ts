@@ -1,1 +1,1 @@
-export * from './errorHandler.js';
+export { default as errorHandler } from './errorHandler.js';
