@@ -6,11 +6,19 @@ import {
   updateListing,
   deleteListing,
 } from '#controllers';
+import { zodValidate } from '#middlewares';
+import { listingInputSchema } from '#schemas';
+import { de } from 'zod/v4/locales';
 
 export const listingRouter = Router();
 
-listingRouter.post(`/`, createListing);
-listingRouter.get(`/`, getAllListings);
-listingRouter.get(`/:id`, getListingById);
-listingRouter.put(`/:id`, updateListing);
-listingRouter.delete(`/:id`, deleteListing);
+listingRouter
+  .route('/')
+  .get(getAllListings)
+  .post(zodValidate(listingInputSchema), createListing);
+
+listingRouter
+  .route('/:id')
+  .get(getListingById)
+  .put(zodValidate(listingInputSchema), updateListing)
+  .delete(de);

@@ -20,7 +20,8 @@
       "#models": ["./models/index.ts"],
       "#routes": ["./routes/index.ts"],
       "#utils": ["./utils/index.ts"],
-      "#middlewares": ["./middlewares/index.ts"]
+      "#middlewares": ["./middlewares/index.ts"],
+      "#schemas": ["./schemas/index.ts"]
     }
   },
   "include": ["src/**/*"],

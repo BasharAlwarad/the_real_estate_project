@@ -6,11 +6,16 @@ import {
   updateUser,
   deleteUser,
 } from '#controllers';
+import { zodValidate } from '#middlewares';
+import { userInputSchema } from '#schemas';
 
 export const userRouter = Router();
-
-userRouter.post(`/`, createUser);
-userRouter.get(`/`, getAllUsers);
-userRouter.get(`/:id`, getUserById);
-userRouter.put(`/:id`, updateUser);
-userRouter.delete(`/:id`, deleteUser);
+userRouter
+  .route('/')
+  .get(getAllUsers)
+  .post(zodValidate(userInputSchema), createUser);
+userRouter
+  .route('/:id')
+  .get(getUserById)
+  .put(zodValidate(userInputSchema), updateUser)
+  .delete(deleteUser);
