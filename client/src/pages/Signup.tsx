@@ -8,7 +8,6 @@ const Signup = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [image, setImage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
@@ -35,7 +34,6 @@ const Signup = () => {
         userName,
         email,
         password,
-        image,
       });
       console.log('User created:', response.data);
 
@@ -44,7 +42,6 @@ const Signup = () => {
       setEmail('');
       setPassword('');
       setConfirmPassword('');
-      setImage('');
 
       // Navigate to login or home page
       navigate('/login');
@@ -124,25 +121,6 @@ const Signup = () => {
                   onChange={(e) => setEmail(e.target.value)}
                   className="input input-bordered w-full focus:input-primary"
                   required
-                />
-              </div>
-
-              {/* Image URL Field */}
-              <div className="form-control">
-                <label className="label">
-                  <span className="label-text font-semibold">
-                    Profile Image URL
-                  </span>
-                  <span className="label-text-alt text-base-content/50">
-                    Optional
-                  </span>
-                </label>
-                <input
-                  type="url"
-                  placeholder="https://example.com/your-photo.jpg"
-                  value={image}
-                  onChange={(e) => setImage(e.target.value)}
-                  className="input input-bordered w-full focus:input-primary"
                 />
               </div>
 

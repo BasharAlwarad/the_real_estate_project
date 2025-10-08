@@ -1,13 +1,14 @@
-import { Listing } from '#models';
-import { httpErrors, asyncHandler } from '#utils';
+import { Request, Response } from 'express';
 import mongoose from 'mongoose';
+import { Listing } from '#models';
+import { httpErrors } from '#utils';
 
-export const getAllListings = asyncHandler(async (req, res) => {
-  const listings = await Listing.find();
+export const getAllListings = async (req: Request, res: Response) => {
+  const listings = await Listing.find({});
   res.json(listings);
-});
+};
 
-export const getListingById = asyncHandler(async (req, res) => {
+export const getListingById = async (req: Request, res: Response) => {
   const { id } = req.params;
 
   if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -21,33 +22,47 @@ export const getListingById = asyncHandler(async (req, res) => {
   }
 
   res.json(listing);
-});
+};
 
-export const createListing = asyncHandler(async (req, res) => {
-  const newListing = await Listing.create(req.body);
-  res.status(201).json(newListing);
-});
+export const createListing = async (req: Request, res: Response) => {
+  if (!req.body || Object.keys(req.body).length === 0) {
+    httpErrors.unprocessableEntity('Request body cannot be empty');
+  }
 
-export const updateListing = asyncHandler(async (req, res) => {
+  const newListing = new Listing(req.body);
+  const savedListing = await newListing.save();
+  res.status(201).json({
+    message: 'Listing created successfully',
+    listing: savedListing,
+  });
+};
+
+export const updateListing = async (req: Request, res: Response) => {
   const { id } = req.params;
+  const updates = req.body;
 
   if (!mongoose.Types.ObjectId.isValid(id)) {
     httpErrors.badRequest('Invalid listing ID');
   }
 
-  const updatedListing = await Listing.findByIdAndUpdate(id, req.body, {
+  // Check if listing exists first
+  const existingListing = await Listing.findById(id);
+  if (!existingListing) {
+    httpErrors.notFound('Listing not found');
+  }
+
+  const updatedListing = await Listing.findByIdAndUpdate(id, updates, {
     new: true,
     runValidators: true,
   });
 
-  if (!updatedListing) {
-    httpErrors.notFound('Listing not found');
-  }
+  res.json({
+    message: 'Listing updated successfully',
+    listing: updatedListing,
+  });
+};
 
-  res.json(updatedListing);
-});
-
-export const deleteListing = asyncHandler(async (req, res) => {
+export const deleteListing = async (req: Request, res: Response) => {
   const { id } = req.params;
 
   if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -62,5 +77,6 @@ export const deleteListing = asyncHandler(async (req, res) => {
 
   res.json({
     message: 'Listing deleted successfully',
+    listing: deletedListing,
   });
-});
+};

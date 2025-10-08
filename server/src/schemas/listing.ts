@@ -1,18 +1,17 @@
 import { z } from 'zod';
 import { Types } from 'mongoose';
 
-// Flexible schema that works for both create and update operations
 export const listingInputSchema = z
   .object({
     title: z
       .string({ message: 'Title must be a string' })
       .min(1, { message: 'Title is required' })
       .trim()
-      .optional(), // Made optional to work for updates
+      .optional(),
     price: z
       .number({ message: 'Price must be a number' })
       .min(0, { message: 'Price must be positive' })
-      .optional(), // Made optional to work for updates
+      .optional(),
     // Flexible image field that accepts:
     // 1. URL strings (when user provides a URL)
     // 2. Any string (when cloudUploader middleware sets the Cloudinary URL)
@@ -31,10 +30,10 @@ export const listingCreateSchema = listingInputSchema.extend({
   title: z
     .string({ message: 'Title must be a string' })
     .min(1, { message: 'Title is required' })
-    .trim(), // Required for creation
+    .trim(),
   price: z
     .number({ message: 'Price must be a number' })
-    .min(0, { message: 'Price must be positive' }), // Required for creation
+    .min(0, { message: 'Price must be positive' }),
 });
 
 // Alias for updates (same as base schema with all optional fields)

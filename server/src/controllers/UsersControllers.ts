@@ -1,56 +1,68 @@
 import { User } from '#models';
-import { httpErrors, asyncHandler } from '#utils';
+import { httpErrors } from '#utils';
 import mongoose from 'mongoose';
+import { Request, Response } from 'express';
 
-export const getAllUsers = asyncHandler(async (req, res) => {
-  const users = await User.find().lean().sort({ createdAt: -1 });
-  if (!users || users.length === 0) {
-    httpErrors.notFound('No users found');
-  }
+export const getAllUsers = async (req: Request, res: Response) => {
+  const users = await User.find({});
   res.json(users);
-});
+};
 
-export const getUserById = asyncHandler(async (req, res) => {
+export const getUserById = async (req: Request, res: Response) => {
   const { id } = req.params;
 
   if (!mongoose.Types.ObjectId.isValid(id)) {
     httpErrors.badRequest('Invalid user ID');
   }
 
-  const user = await User.findById(id).lean();
+  const user = await User.findById(id);
 
   if (!user) {
     httpErrors.notFound('User not found');
   }
 
   res.json(user);
-});
+};
 
-export const createUser = asyncHandler(async (req, res) => {
-  const newUser = await User.create(req.body);
-  res.status(201).json(newUser);
-});
+export const createUser = async (req: Request, res: Response) => {
+  if (!req.body || Object.keys(req.body).length === 0) {
+    httpErrors.unprocessableEntity('Request body cannot be empty');
+  }
 
-export const updateUser = asyncHandler(async (req, res) => {
+  const newUser = new User(req.body);
+  const savedUser = await newUser.save();
+  res.status(201).json({
+    message: 'User created successfully',
+    user: savedUser,
+  });
+};
+
+export const updateUser = async (req: Request, res: Response) => {
   const { id } = req.params;
+  const updates = req.body;
 
   if (!mongoose.Types.ObjectId.isValid(id)) {
     httpErrors.badRequest('Invalid user ID');
   }
 
-  const updatedUser = await User.findByIdAndUpdate(id, req.body, {
-    new: true,
-    runValidators: true,
-  }).lean();
-
-  if (!updatedUser) {
+  // Check if user exists first
+  const existingUser = await User.findById(id);
+  if (!existingUser) {
     httpErrors.notFound('User not found');
   }
 
-  res.json(updatedUser);
-});
+  const updatedUser = await User.findByIdAndUpdate(id, updates, {
+    new: true,
+    runValidators: true,
+  });
 
-export const deleteUser = asyncHandler(async (req, res) => {
+  res.json({
+    message: 'User updated successfully',
+    user: updatedUser,
+  });
+};
+
+export const deleteUser = async (req: Request, res: Response) => {
   const { id } = req.params;
 
   if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -65,5 +77,6 @@ export const deleteUser = asyncHandler(async (req, res) => {
 
   res.json({
     message: 'User deleted successfully',
+    user: deletedUser,
   });
-});
+};

@@ -203,7 +203,7 @@ const User = () => {
         );
       }
 
-      setUser(response.data);
+      setUser(response.data.user);
       setIsEditModalOpen(false);
       setError('');
 
