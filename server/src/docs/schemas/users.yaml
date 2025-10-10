@@ -1,0 +1,174 @@
+openapi: 3.1.0
+components:
+  schemas:
+    UserInput:
+      type: object
+      properties:
+        userName:
+          type: string
+          minLength: 2
+          maxLength: 50
+          example: 'john_doe'
+          description: User's display name or username
+        email:
+          type: string
+          format: email
+          example: 'john.doe@example.com'
+          description: User's email address (must be unique)
+        image:
+          oneOf:
+            - type: string
+              format: uri
+              example: 'https://example.com/profile-image.jpg'
+              description: URL to an existing profile image
+            - type: string
+              format: base64
+              example: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMYAAACUCAMAAAD...'
+              description: Base64 encoded profile image data
+            - type: string
+              format: binary
+              description: Profile image file upload (handled by multipart/form-data)
+          description: User's profile image. Can be a URL, base64 data, or uploaded file. Defaults to system avatar if not provided
+        password:
+          type: string
+          format: password
+          minLength: 6
+          example: 'securePassword123'
+          description: User's password (minimum 6 characters)
+      description: Schema for user input data (all fields optional for updates)
+
+    UserCreate:
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/UserInput'
+      required:
+        - userName
+        - email
+        - password
+      properties:
+        userName:
+          type: string
+          minLength: 2
+          maxLength: 50
+          example: 'john_doe'
+          description: User's display name or username (required for registration)
+        email:
+          type: string
+          format: email
+          example: 'john.doe@example.com'
+          description: User's email address (required for registration, must be unique)
+        password:
+          type: string
+          format: password
+          minLength: 6
+          example: 'securePassword123'
+          description: User's password (required for registration, minimum 6 characters)
+      description: Schema for creating a new user account (requires userName, email, and password)
+
+    UserUpdate:
+      allOf:
+        - $ref: '#/components/schemas/UserInput'
+      description: Schema for updating an existing user (all fields optional)
+
+    UserLogin:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          example: 'john.doe@example.com'
+          description: User's email address
+        password:
+          type: string
+          format: password
+          example: 'securePassword123'
+          description: User's password
+      required:
+        - email
+        - password
+      description: Schema for user login credentials
+
+    User:
+      type: object
+      properties:
+        _id:
+          type: string
+          format: objectid
+          example: '507f1f77bcf86cd799439011'
+          description: MongoDB ObjectId of the user
+        userName:
+          type: string
+          minLength: 2
+          maxLength: 50
+          example: 'john_doe'
+          description: User's display name or username
+        email:
+          type: string
+          format: email
+          example: 'john.doe@example.com'
+          description: User's email address (unique)
+        image:
+          type: string
+          example: 'https://res.cloudinary.com/demo/image/upload/profile.jpg'
+          description: User's profile image URL (processed by Cloudinary or default avatar)
+        createdAt:
+          type: string
+          format: date-time
+          example: '2025-10-10T10:30:00.000Z'
+          description: When the user account was created
+        updatedAt:
+          type: string
+          format: date-time
+          example: '2025-10-10T15:45:00.000Z'
+          description: When the user account was last updated
+      required:
+        - _id
+        - userName
+        - email
+        - createdAt
+        - updatedAt
+      description: Complete user object as stored in database (password excluded for security)
+
+    UserResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: 'User retrieved successfully'
+          description: Response message
+        user:
+          $ref: '#/components/schemas/User'
+      description: Standard response format for single user operations
+
+    UsersResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: 'Users retrieved successfully'
+          description: Response message
+        users:
+          type: array
+          items:
+            $ref: '#/components/schemas/User'
+          description: Array of user objects
+        count:
+          type: integer
+          example: 150
+          description: Total number of users found
+      description: Standard response format for multiple users operations
+
+    AuthResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: 'Login successful'
+          description: Authentication response message
+        user:
+          $ref: '#/components/schemas/User'
+        token:
+          type: string
+          example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
+          description: JWT authentication token (if applicable)
+      description: Response format for authentication operations

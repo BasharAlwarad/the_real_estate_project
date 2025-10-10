@@ -2,6 +2,13 @@ import { type ErrorRequestHandler } from 'express';
 import { appendFile, mkdir } from 'fs/promises';
 import { join } from 'path';
 
+/**
+ * Express error handler middleware
+ *
+ * Handles errors by logging them to daily log files and sending appropriate responses.
+ * Error logging schema is documented in: /docs/schemas/common.yaml
+ */
+
 const errorHandler: ErrorRequestHandler = async (err, req, res, next) => {
   try {
     // Create log directory if it doesn't exist

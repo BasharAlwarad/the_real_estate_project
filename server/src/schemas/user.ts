@@ -1,6 +1,14 @@
 import { z } from 'zod';
 import { Types } from 'mongoose';
 
+/**
+ * User validation schemas using Zod
+ *
+ * These schemas define the runtime validation rules for user data.
+ * API documentation schemas are maintained separately in:
+ * @see /docs/schemas/users.yaml
+ */
+
 export const userInputSchema = z
   .object({
     userName: z

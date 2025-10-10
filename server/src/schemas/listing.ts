@@ -1,6 +1,14 @@
 import { z } from 'zod';
 import { Types } from 'mongoose';
 
+/**
+ * Listing validation schemas using Zod
+ *
+ * These schemas define the runtime validation rules for listing data.
+ * API documentation schemas are maintained separately in:
+ * @see /docs/schemas/listings.yaml
+ */
+
 export const listingInputSchema = z
   .object({
     title: z
