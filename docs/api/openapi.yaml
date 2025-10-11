@@ -53,24 +53,410 @@ tags:
     description: API health and status endpoints
 
 paths:
-  # Health endpoints
   /:
-    $ref: './paths/health.yaml#/HealthCheck'
+    get:
+      tags:
+        - Health
+      summary: API Health Check
+      description: Check if the API server is running and healthy
+      responses:
+        '200':
+          description: Server is running successfully
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: 'server is working on 3000'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerError'
 
-  # User endpoints
   /users:
-    $ref: './paths/users.yaml#/Users'
-  /users/{id}:
-    $ref: './paths/users.yaml#/UserById'
+    get:
+      tags:
+        - Users
+      summary: Get all users
+      description: Retrieve all users from the database
+      responses:
+        '200':
+          description: Successfully retrieved all users
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UsersResponse'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerError'
+    post:
+      tags:
+        - Users
+      summary: Create a new user
+      description: Create a new user account
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserCreate'
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                userName:
+                  type: string
+                  example: 'jane_smith'
+                email:
+                  type: string
+                  format: email
+                  example: 'jane.smith@example.com'
+                password:
+                  type: string
+                  format: password
+                  example: 'securePassword123'
+                image:
+                  type: string
+                  format: binary
+                  description: Profile image file upload
+      responses:
+        '201':
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '400':
+          description: Bad request - validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        '422':
+          description: Unprocessable entity - empty request body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerError'
 
-  # Listing endpoints
+  /users/{id}:
+    get:
+      tags:
+        - Users
+      summary: Get user by ID
+      description: Retrieve a specific user by their ID
+      parameters:
+        - $ref: '#/components/parameters/UserIdParam'
+      responses:
+        '200':
+          description: Successfully retrieved the user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          description: Bad request - invalid user ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundError'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerError'
+    put:
+      tags:
+        - Users
+      summary: Update user by ID
+      description: Update a specific user by their ID
+      parameters:
+        - $ref: '#/components/parameters/UserIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUpdate'
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                userName:
+                  type: string
+                  example: 'updated_username'
+                email:
+                  type: string
+                  format: email
+                  example: 'updated@example.com'
+                image:
+                  type: string
+                  format: binary
+                  description: New profile image file upload
+      responses:
+        '200':
+          description: User updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '400':
+          description: Bad request - invalid user ID or validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundError'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerError'
+    delete:
+      tags:
+        - Users
+      summary: Delete user by ID
+      description: Delete a specific user by their ID
+      parameters:
+        - $ref: '#/components/parameters/UserIdParam'
+      responses:
+        '200':
+          description: User deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '400':
+          description: Bad request - invalid user ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundError'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerError'
+
   /listings:
-    $ref: './paths/listings.yaml#/Listings'
+    get:
+      tags:
+        - Listings
+      summary: Get all listings
+      description: Retrieve all real estate listings from the database
+      responses:
+        '200':
+          description: Successfully retrieved all listings
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListingsResponse'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerError'
+    post:
+      tags:
+        - Listings
+      summary: Create a new listing
+      description: Create a new real estate listing
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListingCreate'
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                  example: 'Beautiful Ocean View House'
+                price:
+                  type: number
+                  example: 750000
+                image:
+                  type: string
+                  format: binary
+                  description: Image file upload
+      responses:
+        '201':
+          description: Listing created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListingResponse'
+        '400':
+          description: Bad request - validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        '422':
+          description: Unprocessable entity - empty request body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerError'
+
   /listings/{id}:
-    $ref: './paths/listings.yaml#/ListingById'
+    get:
+      tags:
+        - Listings
+      summary: Get listing by ID
+      description: Retrieve a specific real estate listing by its ID
+      parameters:
+        - $ref: '#/components/parameters/ListingIdParam'
+      responses:
+        '200':
+          description: Successfully retrieved the listing
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Listing'
+        '400':
+          description: Bad request - invalid listing ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        '404':
+          description: Listing not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundError'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerError'
+    put:
+      tags:
+        - Listings
+      summary: Update listing by ID
+      description: Update a specific real estate listing by its ID
+      parameters:
+        - $ref: '#/components/parameters/ListingIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListingUpdate'
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                  example: 'Updated Beautiful Ocean View House'
+                price:
+                  type: number
+                  example: 850000
+                image:
+                  type: string
+                  format: binary
+                  description: New image file upload
+      responses:
+        '200':
+          description: Listing updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListingResponse'
+        '400':
+          description: Bad request - invalid listing ID or validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        '404':
+          description: Listing not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundError'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerError'
+    delete:
+      tags:
+        - Listings
+      summary: Delete listing by ID
+      description: Delete a specific real estate listing by its ID
+      parameters:
+        - $ref: '#/components/parameters/ListingIdParam'
+      responses:
+        '200':
+          description: Listing deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListingResponse'
+        '400':
+          description: Bad request - invalid listing ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        '404':
+          description: Listing not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundError'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerError'
 
 components:
-  # Security schemes
   securitySchemes:
     bearerAuth:
       type: http
@@ -78,54 +464,318 @@ components:
       bearerFormat: JWT
       description: JWT token for authentication (future implementation)
 
-  # Reusable parameters
   parameters:
-    $ref: './components/parameters.yaml'
+    UserIdParam:
+      name: id
+      in: path
+      required: true
+      description: MongoDB ObjectId of the user
+      schema:
+        type: string
+        format: objectid
+        pattern: '^[0-9a-fA-F]{24}$'
+        example: '507f1f77bcf86cd799439011'
 
-  # Reusable schemas
+    ListingIdParam:
+      name: id
+      in: path
+      required: true
+      description: MongoDB ObjectId of the listing
+      schema:
+        type: string
+        format: objectid
+        pattern: '^[0-9a-fA-F]{24}$'
+        example: '507f1f77bcf86cd799439012'
+
   schemas:
-    # User schemas
     UserInput:
-      $ref: './schemas/users.yaml#/UserInput'
+      type: object
+      properties:
+        userName:
+          type: string
+          minLength: 2
+          maxLength: 50
+          example: 'john_doe'
+          description: User's display name or username
+        email:
+          type: string
+          format: email
+          example: 'john.doe@example.com'
+          description: User's email address (must be unique)
+        image:
+          oneOf:
+            - type: string
+              format: uri
+              example: 'https://example.com/profile-image.jpg'
+              description: URL to an existing profile image
+            - type: string
+              format: base64
+              example: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMYAAACUCAMAAAD...'
+              description: Base64 encoded profile image data
+            - type: string
+              format: binary
+              description: Profile image file upload (handled by multipart/form-data)
+          description: User's profile image. Can be a URL, base64 data, or uploaded file. Defaults to system avatar if not provided
+        password:
+          type: string
+          format: password
+          minLength: 6
+          example: 'securePassword123'
+          description: User's password (minimum 6 characters)
+      description: Schema for user input data (all fields optional for updates)
+
     UserCreate:
-      $ref: './schemas/users.yaml#/UserCreate'
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/UserInput'
+      required:
+        - userName
+        - email
+        - password
+      description: Schema for creating a new user account (requires userName, email, and password)
+
     UserUpdate:
-      $ref: './schemas/users.yaml#/UserUpdate'
+      allOf:
+        - $ref: '#/components/schemas/UserInput'
+      description: Schema for updating an existing user (all fields optional)
+
     User:
-      $ref: './schemas/users.yaml#/User'
+      type: object
+      properties:
+        _id:
+          type: string
+          format: objectid
+          example: '507f1f77bcf86cd799439011'
+          description: MongoDB ObjectId of the user
+        userName:
+          type: string
+          minLength: 2
+          maxLength: 50
+          example: 'john_doe'
+          description: User's display name or username
+        email:
+          type: string
+          format: email
+          example: 'john.doe@example.com'
+          description: User's email address (unique)
+        image:
+          type: string
+          example: 'https://res.cloudinary.com/demo/image/upload/profile.jpg'
+          description: User's profile image URL (processed by Cloudinary or default avatar)
+        createdAt:
+          type: string
+          format: date-time
+          example: '2025-10-10T10:30:00.000Z'
+          description: When the user account was created
+        updatedAt:
+          type: string
+          format: date-time
+          example: '2025-10-10T15:45:00.000Z'
+          description: When the user account was last updated
+      required:
+        - _id
+        - userName
+        - email
+        - createdAt
+        - updatedAt
+      description: Complete user object as stored in database (password excluded for security)
+
     UserResponse:
-      $ref: './schemas/users.yaml#/UserResponse'
+      type: object
+      properties:
+        message:
+          type: string
+          example: 'User retrieved successfully'
+          description: Response message
+        user:
+          $ref: '#/components/schemas/User'
+      description: Standard response format for single user operations
+
     UsersResponse:
-      $ref: './schemas/users.yaml#/UsersResponse'
+      type: object
+      properties:
+        message:
+          type: string
+          example: 'Users retrieved successfully'
+          description: Response message
+        users:
+          type: array
+          items:
+            $ref: '#/components/schemas/User'
+          description: Array of user objects
+        count:
+          type: integer
+          example: 150
+          description: Total number of users found
+      description: Standard response format for multiple users operations
 
-    # Listing schemas
     ListingInput:
-      $ref: './schemas/listings.yaml#/ListingInput'
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 1
+          example: 'Beautiful Ocean View House'
+          description: The title/name of the real estate property
+        price:
+          type: number
+          minimum: 0
+          example: 750000
+          description: The price of the real estate property in dollars
+        image:
+          oneOf:
+            - type: string
+              format: uri
+              example: 'https://example.com/house-image.jpg'
+              description: URL to an existing image
+            - type: string
+              format: base64
+              example: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMYAAACUCAMAAAD...'
+              description: Base64 encoded image data
+            - type: string
+              format: binary
+              description: Image file upload (handled by multipart/form-data)
+          description: The image of the real estate property. Can be a URL, base64 data, or uploaded file
+      description: Schema for listing input data (all fields optional for updates)
+
     ListingCreate:
-      $ref: './schemas/listings.yaml#/ListingCreate'
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/ListingInput'
+      required:
+        - title
+        - price
+      description: Schema for creating a new listing (requires title and price)
+
     ListingUpdate:
-      $ref: './schemas/listings.yaml#/ListingUpdate'
+      allOf:
+        - $ref: '#/components/schemas/ListingInput'
+      description: Schema for updating an existing listing (all fields optional)
+
     Listing:
-      $ref: './schemas/listings.yaml#/Listing'
+      type: object
+      properties:
+        _id:
+          type: string
+          format: objectid
+          example: '507f1f77bcf86cd799439011'
+          description: MongoDB ObjectId of the listing
+        title:
+          type: string
+          minLength: 1
+          example: 'Beautiful Ocean View House'
+          description: The title/name of the real estate property
+        price:
+          type: number
+          minimum: 0
+          example: 750000
+          description: The price of the real estate property in dollars
+        image:
+          type: string
+          example: 'https://res.cloudinary.com/demo/image/upload/sample.jpg'
+          description: The processed image URL (typically from Cloudinary)
+        createdAt:
+          type: string
+          format: date-time
+          example: '2025-10-10T10:30:00.000Z'
+          description: When the listing was created
+        updatedAt:
+          type: string
+          format: date-time
+          example: '2025-10-10T15:45:00.000Z'
+          description: When the listing was last updated
+      required:
+        - _id
+        - title
+        - price
+        - createdAt
+        - updatedAt
+      description: Complete listing object as stored in database
+
     ListingResponse:
-      $ref: './schemas/listings.yaml#/ListingResponse'
+      type: object
+      properties:
+        message:
+          type: string
+          example: 'Listing retrieved successfully'
+          description: Response message
+        listing:
+          $ref: '#/components/schemas/Listing'
+      description: Standard response format for single listing operations
+
     ListingsResponse:
-      $ref: './schemas/listings.yaml#/ListingsResponse'
+      type: object
+      properties:
+        message:
+          type: string
+          example: 'Listings retrieved successfully'
+          description: Response message
+        listings:
+          type: array
+          items:
+            $ref: '#/components/schemas/Listing'
+          description: Array of listing objects
+        count:
+          type: integer
+          example: 25
+          description: Total number of listings found
+      description: Standard response format for multiple listings operations
 
-    # Common schemas
     ErrorResponse:
-      $ref: './schemas/common.yaml#/ErrorResponse'
+      type: object
+      properties:
+        error:
+          type: string
+          example: 'Resource not found'
+          description: Error message describing what went wrong
+        details:
+          type: object
+          description: Additional error details (optional)
+      description: Standard error response format
+
     ValidationError:
-      $ref: './schemas/common.yaml#/ValidationError'
+      type: object
+      properties:
+        error:
+          type: string
+          example: 'Validation failed'
+          description: Error type identifier
+        details:
+          type: object
+          properties:
+            field:
+              type: string
+              example: 'email'
+              description: The field that failed validation
+            message:
+              type: string
+              example: 'Please enter a valid email'
+              description: Specific validation error message
+          description: Detailed validation error information
+      description: Standard validation error response format
+
     NotFoundError:
-      $ref: './schemas/common.yaml#/NotFoundError'
+      type: object
+      properties:
+        error:
+          type: string
+          example: 'Resource not found'
+          description: Error message
+        message:
+          type: string
+          example: 'The requested resource does not exist'
+          description: Additional error details
+      description: Standard 404 error response format
+
     ServerError:
-      $ref: './schemas/common.yaml#/ServerError'
-
-  # Reusable examples
-  examples:
-    $ref: './components/examples.yaml'
-
-  # Reusable responses
-  responses:
-    $ref: './components/responses.yaml'
+      type: object
+      properties:
+        error:
+          type: string
+          example: 'Internal server error'
+          description: Error message
+        message:
+          type: string
+          example: 'An unexpected error occurred'
+          description: Additional error details
+      description: Standard 500 server error response format

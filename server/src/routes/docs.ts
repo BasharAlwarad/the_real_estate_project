@@ -8,7 +8,7 @@ import yaml from 'js-yaml';
 const docsRouter = Router();
 
 /**
- * Load the external OpenAPI specification
+ * Load the external OpenAPI specification - Test Mode
  *
  * This configuration loads the complete API documentation from external YAML files
  * located in the /docs/api/ directory, keeping all documentation separate from
