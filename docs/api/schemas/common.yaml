@@ -1,0 +1,88 @@
+ErrorResponse:
+  type: object
+  properties:
+    error:
+      type: string
+      example: 'Resource not found'
+      description: Error message describing what went wrong
+    details:
+      type: object
+      description: Additional error details (optional)
+  description: Standard error response format
+
+ValidationError:
+  type: object
+  properties:
+    error:
+      type: string
+      example: 'Validation failed'
+      description: Error type identifier
+    details:
+      type: object
+      properties:
+        field:
+          type: string
+          example: 'email'
+          description: The field that failed validation
+        message:
+          type: string
+          example: 'Please enter a valid email'
+          description: Specific validation error message
+      description: Detailed validation error information
+  description: Standard validation error response format
+
+NotFoundError:
+  type: object
+  properties:
+    error:
+      type: string
+      example: 'Resource not found'
+      description: Error message
+    message:
+      type: string
+      example: 'The requested resource does not exist'
+      description: Additional error details
+  description: Standard 404 error response format
+
+ServerError:
+  type: object
+  properties:
+    error:
+      type: string
+      example: 'Internal server error'
+      description: Error message
+    message:
+      type: string
+      example: 'An unexpected error occurred'
+      description: Additional error details
+  description: Standard 500 server error response format
+
+SuccessMessage:
+  type: object
+  properties:
+    message:
+      type: string
+      example: 'Operation completed successfully'
+      description: Success confirmation message
+  description: Standard success response format
+
+ErrorLog:
+  type: object
+  properties:
+    timestamp:
+      type: string
+      format: date-time
+      description: When the error occurred
+    method:
+      type: string
+      description: HTTP method of the request that caused the error
+    url:
+      type: string
+      description: URL path that caused the error
+    message:
+      type: string
+      description: Error message
+    stack:
+      type: string
+      description: Error stack trace
+  description: Error logging format for server-side error tracking

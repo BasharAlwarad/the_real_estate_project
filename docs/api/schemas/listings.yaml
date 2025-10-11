@@ -1,0 +1,124 @@
+ListingInput:
+  type: object
+  properties:
+    title:
+      type: string
+      minLength: 1
+      example: 'Beautiful Ocean View House'
+      description: The title/name of the real estate property
+    price:
+      type: number
+      minimum: 0
+      example: 750000
+      description: The price of the real estate property in dollars
+    image:
+      oneOf:
+        - type: string
+          format: uri
+          example: 'https://example.com/house-image.jpg'
+          description: URL to an existing image
+        - type: string
+          format: base64
+          example: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMYAAACUCAMAAAD...'
+          description: Base64 encoded image data
+        - type: string
+          format: binary
+          description: Image file upload (handled by multipart/form-data)
+      description: The image of the real estate property. Can be a URL, base64 data, or uploaded file
+  description: Schema for listing input data (all fields optional for updates)
+
+ListingCreate:
+  type: object
+  allOf:
+    - $ref: '#/ListingInput'
+  required:
+    - title
+    - price
+  properties:
+    title:
+      type: string
+      minLength: 1
+      example: 'Beautiful Ocean View House'
+      description: The title/name of the real estate property (required for creation)
+    price:
+      type: number
+      minimum: 0
+      example: 750000
+      description: The price of the real estate property in dollars (required for creation)
+  description: Schema for creating a new listing (requires title and price)
+
+ListingUpdate:
+  allOf:
+    - $ref: '#/ListingInput'
+  description: Schema for updating an existing listing (all fields optional)
+
+Listing:
+  type: object
+  allOf:
+    - $ref: '#/ListingCreate'
+  properties:
+    _id:
+      type: string
+      format: objectid
+      example: '507f1f77bcf86cd799439011'
+      description: MongoDB ObjectId of the listing
+    title:
+      type: string
+      minLength: 1
+      example: 'Beautiful Ocean View House'
+      description: The title/name of the real estate property
+    price:
+      type: number
+      minimum: 0
+      example: 750000
+      description: The price of the real estate property in dollars
+    image:
+      type: string
+      example: 'https://res.cloudinary.com/demo/image/upload/sample.jpg'
+      description: The processed image URL (typically from Cloudinary)
+    createdAt:
+      type: string
+      format: date-time
+      example: '2025-10-10T10:30:00.000Z'
+      description: When the listing was created
+    updatedAt:
+      type: string
+      format: date-time
+      example: '2025-10-10T15:45:00.000Z'
+      description: When the listing was last updated
+  required:
+    - _id
+    - title
+    - price
+    - createdAt
+    - updatedAt
+  description: Complete listing object as stored in database
+
+ListingResponse:
+  type: object
+  properties:
+    message:
+      type: string
+      example: 'Listing retrieved successfully'
+      description: Response message
+    listing:
+      $ref: '../openapi.yaml#/components/schemas/Listing'
+  description: Standard response format for single listing operations
+
+ListingsResponse:
+  type: object
+  properties:
+    message:
+      type: string
+      example: 'Listings retrieved successfully'
+      description: Response message
+    listings:
+      type: array
+      items:
+        $ref: '../openapi.yaml#/components/schemas/Listing'
+      description: Array of listing objects
+    count:
+      type: integer
+      example: 25
+      description: Total number of listings found
+  description: Standard response format for multiple listings operations
