@@ -30,7 +30,11 @@ app.get('/', (req, res) => {
   try {
     res.send('server is working on 3000');
   } catch (error) {
-    console.error(error.message);
+    if (error instanceof Error) {
+      console.error(error.message);
+    } else {
+      console.error(error);
+    }
   }
 });
 

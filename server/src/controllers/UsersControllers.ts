@@ -1,7 +1,14 @@
 import { User } from '#models';
 import { httpErrors } from '#utils';
+import {
+  UserController,
+  CreateUserRequest,
+  UpdateUserRequest,
+  ApiResponse,
+  UserResponse,
+  UserParams,
+} from '#types';
 import mongoose from 'mongoose';
-import { Request, Response } from 'express';
 
 /**
  * User controllers for user account management
@@ -10,15 +17,25 @@ import { Request, Response } from 'express';
  * API documentation is maintained externally in: /docs/api/
  */
 
-export const getAllUsers = async (req: Request, res: Response) => {
+export const getAllUsers: UserController<
+  never,
+  ApiResponse<UserResponse[]>
+> = async (req, res) => {
   const users = await User.find({});
-  res.json(users);
+  res.json({
+    success: true,
+    message: 'Users retrieved successfully',
+    data: users as UserResponse[],
+  });
 };
 
-export const getUserById = async (req: Request, res: Response) => {
+export const getUserById: UserController<
+  never,
+  ApiResponse<UserResponse>
+> = async (req, res) => {
   const { id } = req.params;
 
-  if (!mongoose.Types.ObjectId.isValid(id)) {
+  if (!id || !mongoose.Types.ObjectId.isValid(id)) {
     httpErrors.badRequest('Invalid user ID');
   }
 
@@ -28,27 +45,39 @@ export const getUserById = async (req: Request, res: Response) => {
     httpErrors.notFound('User not found');
   }
 
-  res.json(user);
+  res.json({
+    success: true,
+    message: 'User retrieved successfully',
+    data: user as UserResponse,
+  });
 };
 
-export const createUser = async (req: Request, res: Response) => {
+export const createUser: UserController<
+  CreateUserRequest,
+  ApiResponse<UserResponse>
+> = async (req, res) => {
   if (!req.body || Object.keys(req.body).length === 0) {
     httpErrors.unprocessableEntity('Request body cannot be empty');
   }
 
   const newUser = new User(req.body);
   const savedUser = await newUser.save();
+
   res.status(201).json({
+    success: true,
     message: 'User created successfully',
-    user: savedUser,
+    data: savedUser as UserResponse,
   });
 };
 
-export const updateUser = async (req: Request, res: Response) => {
+export const updateUser: UserController<
+  UpdateUserRequest,
+  ApiResponse<UserResponse>
+> = async (req, res) => {
   const { id } = req.params;
   const updates = req.body;
 
-  if (!mongoose.Types.ObjectId.isValid(id)) {
+  if (!id || !mongoose.Types.ObjectId.isValid(id)) {
     httpErrors.badRequest('Invalid user ID');
   }
 
@@ -64,15 +93,19 @@ export const updateUser = async (req: Request, res: Response) => {
   });
 
   res.json({
+    success: true,
     message: 'User updated successfully',
-    user: updatedUser,
+    data: updatedUser as UserResponse,
   });
 };
 
-export const deleteUser = async (req: Request, res: Response) => {
+export const deleteUser: UserController<
+  never,
+  ApiResponse<UserResponse>
+> = async (req, res) => {
   const { id } = req.params;
 
-  if (!mongoose.Types.ObjectId.isValid(id)) {
+  if (!id || !mongoose.Types.ObjectId.isValid(id)) {
     httpErrors.badRequest('Invalid user ID');
   }
 
@@ -83,7 +116,8 @@ export const deleteUser = async (req: Request, res: Response) => {
   }
 
   res.json({
+    success: true,
     message: 'User deleted successfully',
-    user: deletedUser,
+    data: deletedUser as UserResponse,
   });
 };

@@ -11,8 +11,12 @@
     "allowJs": true,
     "resolveJsonModule": true,
     "moduleResolution": "node",
-    "noImplicitAny": false,
-    "strict": false,
+    "noImplicitAny": true,
+    "strict": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
     "baseUrl": "./src",
     "paths": {
       "#controllers": ["./controllers/index.ts"],
@@ -21,7 +25,8 @@
       "#models": ["./models/index.ts"],
       "#routes": ["./routes/index.ts"],
       "#schemas": ["./schemas/index.ts"],
-      "#utils": ["./utils/index.ts"]
+      "#utils": ["./utils/index.ts"],
+      "#types": ["./types/index.ts"]
     }
   },
   "include": ["src/**/*"],

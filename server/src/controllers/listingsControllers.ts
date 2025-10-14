@@ -1,7 +1,13 @@
-import { Request, Response } from 'express';
-import mongoose from 'mongoose';
 import { Listing } from '#models';
 import { httpErrors } from '#utils';
+import {
+  ListingController,
+  CreateListingRequest,
+  UpdateListingRequest,
+  ApiResponse,
+  ListingResponse,
+} from '#types';
+import mongoose from 'mongoose';
 
 /**
  * Listing controllers for real estate management
@@ -10,15 +16,25 @@ import { httpErrors } from '#utils';
  * API documentation is maintained externally in: /docs/api/
  */
 
-export const getAllListings = async (req: Request, res: Response) => {
+export const getAllListings: ListingController<
+  never,
+  ApiResponse<ListingResponse[]>
+> = async (req, res) => {
   const listings = await Listing.find({});
-  res.json(listings);
+  res.json({
+    success: true,
+    message: 'Listings retrieved successfully',
+    data: listings as ListingResponse[],
+  });
 };
 
-export const getListingById = async (req: Request, res: Response) => {
+export const getListingById: ListingController<
+  never,
+  ApiResponse<ListingResponse>
+> = async (req, res) => {
   const { id } = req.params;
 
-  if (!mongoose.Types.ObjectId.isValid(id)) {
+  if (!id || !mongoose.Types.ObjectId.isValid(id)) {
     httpErrors.badRequest('Invalid listing ID');
   }
 
@@ -28,27 +44,39 @@ export const getListingById = async (req: Request, res: Response) => {
     httpErrors.notFound('Listing not found');
   }
 
-  res.json(listing);
+  res.json({
+    success: true,
+    message: 'Listing retrieved successfully',
+    data: listing as ListingResponse,
+  });
 };
 
-export const createListing = async (req: Request, res: Response) => {
+export const createListing: ListingController<
+  CreateListingRequest,
+  ApiResponse<ListingResponse>
+> = async (req, res) => {
   if (!req.body || Object.keys(req.body).length === 0) {
     httpErrors.unprocessableEntity('Request body cannot be empty');
   }
 
   const newListing = new Listing(req.body);
   const savedListing = await newListing.save();
+
   res.status(201).json({
+    success: true,
     message: 'Listing created successfully',
-    listing: savedListing,
+    data: savedListing as ListingResponse,
   });
 };
 
-export const updateListing = async (req: Request, res: Response) => {
+export const updateListing: ListingController<
+  UpdateListingRequest,
+  ApiResponse<ListingResponse>
+> = async (req, res) => {
   const { id } = req.params;
   const updates = req.body;
 
-  if (!mongoose.Types.ObjectId.isValid(id)) {
+  if (!id || !mongoose.Types.ObjectId.isValid(id)) {
     httpErrors.badRequest('Invalid listing ID');
   }
 
@@ -64,15 +92,19 @@ export const updateListing = async (req: Request, res: Response) => {
   });
 
   res.json({
+    success: true,
     message: 'Listing updated successfully',
-    listing: updatedListing,
+    data: updatedListing as ListingResponse,
   });
 };
 
-export const deleteListing = async (req: Request, res: Response) => {
+export const deleteListing: ListingController<
+  never,
+  ApiResponse<ListingResponse>
+> = async (req, res) => {
   const { id } = req.params;
 
-  if (!mongoose.Types.ObjectId.isValid(id)) {
+  if (!id || !mongoose.Types.ObjectId.isValid(id)) {
     httpErrors.badRequest('Invalid listing ID');
   }
 
@@ -83,7 +115,8 @@ export const deleteListing = async (req: Request, res: Response) => {
   }
 
   res.json({
+    success: true,
     message: 'Listing deleted successfully',
-    listing: deletedListing,
+    data: deletedListing as ListingResponse,
   });
 };
