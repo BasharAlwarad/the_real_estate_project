@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import { mongoDBConnect } from '#db';
 import { userRouter, listingRouter, docsRouter } from '#routes';
+import { errorHandler } from '#middlewares';
 
 /**
  * Express application setup
@@ -41,6 +42,8 @@ app.get('/', (req, res) => {
 app.use(`/listings`, listingRouter);
 app.use(`/users`, userRouter);
 app.use(`/docs`, docsRouter);
+
+app.use(errorHandler);
 
 // 404 catch-all route - must be last
 app.use(/.*/, (req, res) => {
