@@ -6,7 +6,12 @@ import {
   updateUser,
   deleteUser,
 } from '#controllers';
-import { validateBodyZod, cloudUploader, formMiddleWare } from '#middlewares';
+import {
+  validateBodyZod,
+  cloudUploader,
+  formMiddleWare,
+  requireAuth,
+} from '#middlewares';
 import { userCreateSchema, userUpdateSchema } from '#schemas';
 
 export const userRouter = Router();
@@ -25,9 +30,10 @@ userRouter
   .route('/:id')
   .get(getUserById)
   .put(
+    requireAuth,
     formMiddleWare,
     cloudUploader,
     validateBodyZod(userUpdateSchema),
     updateUser
   )
-  .delete(deleteUser);
+  .delete(requireAuth, deleteUser);

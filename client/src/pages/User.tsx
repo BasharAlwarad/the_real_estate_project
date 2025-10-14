@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import api from '../utils/api';
 
 // Types
 interface User {
@@ -48,13 +49,13 @@ const User = () => {
       try {
         setIsLoading(true);
         setError('');
-        const response = await axios.get(`http://localhost:3000/users/${id}`);
-        setUser(response.data);
+        const { data } = await api.get(`/users/${id}`);
+        setUser(data.data);
         // Initialize form data with current user data
         setFormData({
-          userName: response.data.userName,
-          email: response.data.email,
-          image: response.data.image || '',
+          userName: data.data.userName,
+          email: data.data.email,
+          image: data.data.image || '',
         });
       } catch (error) {
         console.error('Error fetching user:', error);
@@ -177,13 +178,9 @@ const User = () => {
         formDataPayload.append('email', formData.email);
         formDataPayload.append('image', imageFile);
 
-        response = await axios.put(
-          `http://localhost:3000/users/${user._id}`,
-          formDataPayload,
-          {
-            headers: { 'Content-Type': 'multipart/form-data' },
-          }
-        );
+        response = await api.put(`/users/${user._id}`, formDataPayload, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
       } else {
         // Use JSON for URL or default image
         const payload = {
@@ -197,10 +194,7 @@ const User = () => {
               : '',
         };
 
-        response = await axios.put(
-          `http://localhost:3000/users/${user._id}`,
-          payload
-        );
+        response = await api.put(`/users/${user._id}`, payload);
       }
 
       setUser(response.data.user);
@@ -230,7 +224,7 @@ const User = () => {
 
     try {
       setIsDeleting(true);
-      await axios.delete(`http://localhost:3000/users/${user._id}`);
+      await api.delete(`/users/${user._id}`);
       navigate('/users');
     } catch (error) {
       console.error('Error deleting user:', error);

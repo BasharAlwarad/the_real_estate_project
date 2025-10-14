@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import axios from 'axios';
+import api from '../utils/api';
 
 // Types
 interface HouseListing {
@@ -38,14 +38,14 @@ const Home = () => {
 
   // Fetch listings
   const fetchListings = async (): Promise<void> => {
-    const response = await axios.get('http://localhost:3000/listings');
-    setListings(response.data);
+    const { data } = await api.get('/listings');
+    setListings(data.data);
   };
 
   // Create listing
   const createListing = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
-    await axios.post('http://localhost:3000/listings', {
+    await api.post('/listings', {
       ...insertFormData,
       price: parseFloat(insertFormData.price),
     });
@@ -58,7 +58,7 @@ const Home = () => {
   // Update listing
   const updateListing = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
-    await axios.put(`http://localhost:3000/listings/${selectedListing?._id}`, {
+    await api.put(`/listings/${selectedListing?._id}`, {
       ...updateFormData,
       price: parseFloat(updateFormData.price),
     });
@@ -70,7 +70,7 @@ const Home = () => {
 
   // Delete listing
   const deleteListing = async (id: string): Promise<void> => {
-    await axios.delete(`http://localhost:3000/listings/${id}`);
+    await api.delete(`/listings/${id}`);
     fetchListings();
   };
 

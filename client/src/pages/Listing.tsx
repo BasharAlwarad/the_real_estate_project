@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../utils/api';
 
 interface HouseListing {
   _id: string;
@@ -15,15 +15,15 @@ const Listing = () => {
   const [listing, setListing] = useState<HouseListing | null>(null);
 
   const deleteListing = async () => {
-    await axios.delete(`http://localhost:3000/listings/${listing?._id}`);
+    await api.delete(`/listings/${listing?._id}`);
     navigate('/');
   };
 
   useEffect(() => {
     if (id) {
-      axios
-        .get(`http://localhost:3000/listings/${id}`)
-        .then((response) => setListing(response.data));
+      api
+        .get(`/listings/${id}`)
+        .then((response) => setListing(response.data.data));
     }
   }, [id]);
 

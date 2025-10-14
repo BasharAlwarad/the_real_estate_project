@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import axios from 'axios';
+import api from '../utils/api';
 
 // Types
 interface User {
@@ -46,8 +46,8 @@ const Users = () => {
     try {
       setIsLoading(true);
       setError('');
-      const response = await axios.get('http://localhost:3000/users');
-      setUsers(response.data);
+      const { data } = await api.get('/users');
+      setUsers(data.data);
     } catch (error) {
       console.error('Error fetching users:', error);
       setError('Failed to fetch users. Please try again.');
@@ -60,7 +60,7 @@ const Users = () => {
   const createUser = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
     try {
-      await axios.post('http://localhost:3000/users', insertFormData);
+      await api.post('/users', insertFormData);
 
       setInsertFormData({ userName: '', email: '', password: '', image: '' });
       setShowInsertForm(false);
@@ -75,10 +75,7 @@ const Users = () => {
   const updateUser = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
     try {
-      await axios.put(
-        `http://localhost:3000/users/${selectedUser?._id}`,
-        updateFormData
-      );
+      await api.put(`/users/${selectedUser?._id}`, updateFormData);
 
       setShowUpdateForm(false);
       setSelectedUser(null);
@@ -93,7 +90,7 @@ const Users = () => {
   const deleteUser = async (id: string): Promise<void> => {
     if (window.confirm('Are you sure you want to delete this user?')) {
       try {
-        await axios.delete(`http://localhost:3000/users/${id}`);
+        await api.delete(`/users/${id}`);
         fetchUsers();
       } catch (error) {
         console.error('Error deleting user:', error);
