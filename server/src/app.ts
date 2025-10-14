@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
 import { mongoDBConnect } from '#db';
 import { userRouter, listingRouter, docsRouter, authRouter } from '#routes';
 import { errorHandler } from '#middlewares';
@@ -32,6 +33,7 @@ app.use(cors(corsOptions));
 // Handle preflight for all routes (Express 5: use regex instead of '*')
 app.options(/.*/, cors(corsOptions));
 app.use(express.json());
+app.use(cookieParser());
 
 // Initialize database
 mongoDBConnect();

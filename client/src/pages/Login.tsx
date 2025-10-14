@@ -1,15 +1,12 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import api from '../utils/api';
 import { isAxiosError } from 'axios';
-import { setAuthData } from '../utils/auth';
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -17,10 +14,9 @@ const Login: React.FC = () => {
     setIsLoading(true);
 
     try {
-      const res = await api.post('/auth/login', { email, password });
-      const data = res.data;
-      setAuthData(data.session, data.user);
-      navigate('/');
+      await api.post('/auth/login', { email, password });
+      // Cookie is set by backend; reload to update nav/user state
+      window.location.href = '/';
     } catch (err: unknown) {
       if (isAxiosError(err)) {
         setError(err.response?.data?.message || 'Login failed');

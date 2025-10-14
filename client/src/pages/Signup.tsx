@@ -29,14 +29,12 @@ const Signup = () => {
     }
 
     setIsLoading(true);
-
     try {
-      const response = await api.post(`/users`, {
+      await api.post(`/users/test`, {
         userName,
         email,
         password,
       });
-      console.log('User created:', response.data);
 
       // Reset form
       setUserName('');

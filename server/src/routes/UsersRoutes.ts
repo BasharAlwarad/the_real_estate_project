@@ -5,6 +5,7 @@ import {
   createUser,
   updateUser,
   deleteUser,
+  getMe,
 } from '#controllers';
 import {
   validateBodyZod,
@@ -15,6 +16,8 @@ import {
 import { userCreateSchema, userUpdateSchema } from '#schemas';
 
 export const userRouter = Router();
+
+userRouter.get('/me', requireAuth, getMe);
 
 userRouter
   .route('/')

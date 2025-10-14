@@ -1,4 +1,5 @@
 import { User } from '#models';
+import bcrypt from 'bcrypt';
 import { httpErrors } from '#utils';
 import {
   UserController,
@@ -56,18 +57,66 @@ export const createUser: UserController<
   CreateUserRequest,
   ApiResponse<UserResponse>
 > = async (req, res) => {
-  if (!req.body || Object.keys(req.body).length === 0) {
-    httpErrors.unprocessableEntity('Request body cannot be empty');
+  try {
+    console.log('createUser - Request body:', req.body);
+
+    if (!req.body || Object.keys(req.body).length === 0) {
+      res.status(422).json({
+        success: false,
+        message: 'Request body cannot be empty',
+      });
+      return;
+    }
+
+    const { userName, email, password, image } = req.body as any;
+    console.log('createUser - Extracted fields:', {
+      userName,
+      email,
+      password: password ? '[HIDDEN]' : undefined,
+      image,
+    });
+
+    if (!password) {
+      res.status(422).json({
+        success: false,
+        message: 'Password is required',
+      });
+      return;
+    }
+
+    // Hash password with bcrypt
+    const hashedPassword = await bcrypt.hash(password, 12);
+
+    const newUser = new User({
+      userName,
+      email,
+      image,
+      password: hashedPassword,
+    });
+
+    console.log('createUser - About to save user with data:', {
+      userName,
+      email,
+      image,
+      password: '[HASHED]',
+    });
+
+    const savedUser = await newUser.save();
+    console.log('createUser - User saved successfully:', savedUser._id);
+
+    res.status(201).json({
+      success: true,
+      message: 'User created successfully',
+      data: savedUser as UserResponse,
+    });
+  } catch (error) {
+    console.error('createUser - Error:', error);
+    res.status(400).json({
+      success: false,
+      message:
+        error instanceof Error ? error.message : 'Unknown error occurred',
+    });
   }
-
-  const newUser = new User(req.body);
-  const savedUser = await newUser.save();
-
-  res.status(201).json({
-    success: true,
-    message: 'User created successfully',
-    data: savedUser as UserResponse,
-  });
 };
 
 export const updateUser: UserController<
@@ -75,7 +124,7 @@ export const updateUser: UserController<
   ApiResponse<UserResponse>
 > = async (req, res) => {
   const { id } = req.params;
-  const updates = req.body;
+  const updates: any = { ...req.body };
 
   if (!id || !mongoose.Types.ObjectId.isValid(id)) {
     httpErrors.badRequest('Invalid user ID');
@@ -85,6 +134,13 @@ export const updateUser: UserController<
   const existingUser = await User.findById(id);
   if (!existingUser) {
     httpErrors.notFound('User not found');
+  }
+
+  // If password provided, re-hash with bcrypt
+  if (updates.password) {
+    const saltRounds = 12;
+    const hashedPassword = await bcrypt.hash(updates.password, saltRounds);
+    updates.password = hashedPassword;
   }
 
   const updatedUser = await User.findByIdAndUpdate(id, updates, {

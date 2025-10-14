@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import jwt from 'jsonwebtoken';
 
 /**
  * Simple authorization middleware for teaching purposes
@@ -16,31 +17,20 @@ export const requireAuth = (
   res: Response,
   next: NextFunction
 ): void => {
-  // Check for session in Authorization header (Bearer token format)
-  const authHeader = req.headers.authorization;
-  const session = authHeader?.startsWith('Bearer ')
-    ? authHeader.slice(7)
-    : null;
-
-  if (!session) {
-    res.status(401).json({
-      success: false,
-      message: 'Authentication required. Please login first.',
-    });
+  const token = req.cookies?.token;
+  if (!token) {
+    res
+      .status(401)
+      .json({ success: false, message: 'Authentication required' });
     return;
   }
-
-  // In a real app, you would verify the session/token here
-  // For teaching: just check if session exists and is not empty
-  if (session.length < 5) {
-    res.status(401).json({
-      success: false,
-      message: 'Invalid session. Please login again.',
-    });
-    return;
+  try {
+    const jwtSecret = process.env.JWT_SECRET || 'devsecret';
+    const payload = jwt.verify(token, jwtSecret) as { userId: string };
+    // attach userId for downstream usage
+    (req as any).userId = payload.userId;
+    next();
+  } catch {
+    res.status(401).json({ success: false, message: 'Invalid token' });
   }
-
-  // In a real app, you would decode the token and attach user info
-  // For teaching: just continue to the next middleware
-  next();
 };

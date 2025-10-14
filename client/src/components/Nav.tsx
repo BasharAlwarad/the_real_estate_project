@@ -1,40 +1,35 @@
 import { NavLink } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import api from '../utils/api';
+import React, { useState, useEffect } from 'react';
 import Themes from './Themes';
-import { isAuthenticated, getUser, logout } from '../utils/auth';
 
-interface User {
-  _id: string;
-  userName: string;
-  email: string;
-  image?: string;
-  createdAt?: string;
-  updatedAt?: string;
-}
-
-const Nav = () => {
-  const [authenticated, setAuthenticated] = useState(false);
-  const [user, setUser] = useState<User | null>(null);
+const Nav: React.FC = () => {
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    const checkAuth = () => {
-      const authStatus = isAuthenticated();
-      setAuthenticated(authStatus);
-      if (authStatus) {
-        setUser(getUser());
+    const checkAuth = async () => {
+      try {
+        const res = await api.get('/users/me');
+        setIsAuthenticated(res.status === 200 && !!res.data.user);
+      } catch {
+        setIsAuthenticated(false);
+      } finally {
+        setLoading(false);
       }
     };
-
     checkAuth();
-
-    // Listen for storage changes to update auth state
-    const handleStorageChange = () => {
-      checkAuth();
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
+
+  const handleLogout = async () => {
+    try {
+      await api.post('/auth/logout');
+    } catch {
+      // Ignore errors
+    } finally {
+      window.location.href = '/';
+    }
+  };
 
   const activeLink = ({ isActive }: { isActive: boolean }) =>
     isActive ? 'btn btn-ghost text-primary font-bold' : 'btn btn-ghost';
@@ -61,17 +56,10 @@ const Nav = () => {
         </ul>
       </div>
       <div className="navbar-end flex gap-2 items-center">
-        {authenticated ? (
-          <>
-            {user && (
-              <div className="flex items-center gap-2">
-                <span className="text-sm">Welcome, {user.userName}</span>
-              </div>
-            )}
-            <button className="btn btn-ghost" onClick={logout}>
-              Logout
-            </button>
-          </>
+        {loading ? null : isAuthenticated ? (
+          <button className="btn btn-ghost" onClick={handleLogout}>
+            Logout
+          </button>
         ) : (
           <>
             <NavLink to="/login" className={activeLink}>

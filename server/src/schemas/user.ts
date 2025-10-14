@@ -27,6 +27,7 @@ export const userInputSchema = z
       .union([
         z.string().url('Invalid image URL'),
         z.string().min(1, 'Image cannot be empty'),
+        z.string().length(0), // allow empty string
       ])
       .optional(),
     password: z

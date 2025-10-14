@@ -7,34 +7,19 @@ interface User {
   updatedAt?: string;
 }
 
-export const getSession = (): string | null => {
-  return localStorage.getItem('session');
-};
-
-export const getUser = (): User | null => {
-  const userStr = localStorage.getItem('user');
-  if (!userStr) return null;
-
+// In cookie-based auth, getUser should fetch from backend if needed
+export const getUser = async (): Promise<User | null> => {
   try {
-    return JSON.parse(userStr);
+    const res = await fetch('/users/me', { credentials: 'include' });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.user || null;
   } catch {
     return null;
   }
 };
 
-export const isAuthenticated = (): boolean => {
-  const session = getSession();
-  const user = getUser();
-  return !!(session && user);
-};
-
 export const logout = (): void => {
-  localStorage.removeItem('session');
-  localStorage.removeItem('user');
+  // Optionally call backend to clear cookie
   window.location.href = '/login';
-};
-
-export const setAuthData = (session: string, user: User): void => {
-  localStorage.setItem('session', session);
-  localStorage.setItem('user', JSON.stringify(user));
 };

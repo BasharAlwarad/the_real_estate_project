@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Signup Test</title>
+  </head>
+  <body>
+    <h1>Signup Test</h1>
+    <form id="signupForm">
+      <input
+        type="text"
+        id="userName"
+        placeholder="Username"
+        required
+      /><br /><br />
+      <input type="email" id="email" placeholder="Email" required /><br /><br />
+      <input
+        type="password"
+        id="password"
+        placeholder="Password"
+        required
+      /><br /><br />
+      <button type="submit">Sign Up</button>
+    </form>
+
+    <script>
+      document
+        .getElementById('signupForm')
+        .addEventListener('submit', async (e) => {
+          e.preventDefault();
+
+          const userName = document.getElementById('userName').value;
+          const email = document.getElementById('email').value;
+          const password = document.getElementById('password').value;
+
+          try {
+            console.log('Sending:', { userName, email, password });
+
+            const response = await fetch('http://localhost:3000/users', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              credentials: 'include',
+              body: JSON.stringify({ userName, email, password }),
+            });
+
+            console.log('Response status:', response.status);
+            console.log('Response headers:', [...response.headers.entries()]);
+
+            const data = await response.text();
+            console.log('Response data:', data);
+
+            if (response.ok) {
+              alert('User created successfully!');
+            } else {
+              alert('Error: ' + data);
+            }
+          } catch (error) {
+            console.error('Error:', error);
+            alert('Network error: ' + error.message);
+          }
+        });
+    </script>
+  </body>
+</html>

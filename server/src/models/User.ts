@@ -2,7 +2,7 @@ import mongoose, { Document, Schema } from 'mongoose';
 
 interface IUser extends Document {
   userName: string;
-  email: string; // Fixed: changed from number to string
+  email: string;
   image: string;
   password: string;
   createdAt: Date;
