@@ -42,7 +42,6 @@ By exploring this branch, you'll understand:
 ### **🛠️ Practical Implementation**
 
 - **How to implement Swagger** in a TypeScript Express server
-- **How to organize documentation** separately from code
 - **How to create reusable schema components**
 - **How to generate interactive API documentation**
 - **How to maintain documentation** alongside code changes
@@ -51,16 +50,13 @@ By exploring this branch, you'll understand:
 
 ## 🚀 Quick Start
 
-### 1. Explore the Documentation
-
-```bash
-# Start the server
-cd server
 npm run dev
 
 # Visit the interactive documentation
+
 open http://localhost:3000/docs
-```
+
+````
 
 ### 2. Compare Code Organization
 
@@ -73,20 +69,13 @@ code server/src/controllers/UsersControllers.ts  # ~320 lines!
 git checkout feature/swagger_openAPI
 code server/src/controllers/UsersControllers.ts  # ~70 lines ✨
 code server/src/docs/users.yaml                  # Clean documentation
-```
+````
 
 ---
 
-## 📖 Chapter 1: The Importance of Documentation
-
-### Why Professional Documentation Matters
-
 #### **Developer Productivity Impact**
 
-```typescript
-// Without docs: 30 minutes of investigation
 'Hey, what fields does POST /users expect?';
-"What's the response format?";
 'Is email required?';
 'What error codes do you return?';
 
@@ -95,7 +84,8 @@ code server/src/docs/users.yaml                  # Clean documentation
 // 2. See exact request/response format
 // 3. Test endpoint directly in browser
 // 4. Copy working code example
-```
+
+````
 
 #### **Real-World ROI (Return on Investment)**
 
@@ -140,7 +130,7 @@ code server/src/docs/users.yaml                  # Clean documentation
             schema:
               $ref: '#/components/schemas/User'
 # ...generates this interactive documentation automatically! 🎉
-```
+````
 
 ### YAML vs JSON vs Markdown
 

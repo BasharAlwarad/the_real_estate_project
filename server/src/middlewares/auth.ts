@@ -17,7 +17,7 @@ export const requireAuth = (
   res: Response,
   next: NextFunction
 ): void => {
-  const token = req.cookies?.token;
+  const token = req.cookies?.accessToken; // Changed from 'token' to 'accessToken'
   if (!token) {
     res
       .status(401)
