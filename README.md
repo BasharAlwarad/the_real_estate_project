@@ -1,3 +1,352 @@
+# Authentication & Authorization with Cookies + JWT
+
+This README is a focused lecture on how this project implements authentication and authorization using HTTP-only cookies and JSON Web Tokens (JWT). It explains the flow end-to-end, shows real code from the repo, and includes security tips and troubleshooting.
+
+## Table of Contents
+
+- [Overview](#overview)
+- [HTTP Request/Response Flow](#http-requestresponse-flow)
+- [Backend Implementation](#backend-implementation)
+  - [Login Controller](#login-controller)
+  - [Logout Controller](#logout-controller)
+  - [GetMe Controller](#getme-controller)
+  - [requireAuth Middleware](#requireauth-middleware)
+- [Frontend Implementation](#frontend-implementation)
+  - [Axios Configuration](#axios-configuration)
+  - [Checking Authentication Status](#checking-authentication-status)
+- [Core Concepts](#core-concepts)
+  - [What is JWT?](#what-is-jwt)
+  - [What is bcrypt?](#what-is-bcrypt)
+  - [What are Cookies?](#what-are-cookies)
+- [Security Considerations](#security-considerations)
+- [Common Pitfalls & Troubleshooting](#common-pitfalls--troubleshooting)
+- [Testing Locally](#testing-locally)
+- [Summary](#summary)
+
+---
+
+## Overview
+
+This project uses a cookie-based JWT strategy:
+
+- Server validates credentials, signs a JWT, and sets it as an HTTP-only cookie.
+- Browser automatically includes the cookie on subsequent requests.
+- Middleware verifies the token, attaches `userId` to the request, and protected routes return user data.
+
+Key files in this repo:
+
+- `server/src/controllers/AuthControllers.ts` — login, logout, getMe
+- `server/src/middlewares/auth.ts` — `requireAuth` middleware (verifies JWT from cookie)
+- `client/src/utils/api.ts` — axios with `withCredentials: true`
+- `client/src/components/Nav.tsx` — UI uses `/users/me` to determine logged-in state
+- `client/src/utils/auth.ts` — fetch-based helper that calls `/users/me`
+
+---
+
+## HTTP Request/Response Flow
+
+```mermaid
+sequenceDiagram
+  participant B as Browser (Client)
+  participant S as Server (Express)
+  participant DB as Database (MongoDB)
+
+  Note over B,DB: 1) Login
+  B->>S: POST /auth/login { email, password }
+  S->>DB: findOne({ email })
+  DB-->>S: User (with hashed password)
+  S->>S: bcrypt.compare(password, hash)
+  S->>S: jwt.sign({ userId }, secret, { expiresIn: '7d' })
+  S-->>B: Set-Cookie: token=<JWT> HttpOnly SameSite=Lax [Secure]
+  S-->>B: 200 { user }
+
+  Note over B,DB: 2) Authenticated request
+  B->>S: GET /users/me (cookie auto-included)
+  S->>S: jwt.verify(cookie.token)
+  S->>DB: findById(userId)
+  DB-->>S: User
+  S-->>B: 200 { user }
+
+  Note over B,DB: 3) Logout
+  B->>S: POST /auth/logout
+  S-->>B: Set-Cookie: token= Max-Age=0 HttpOnly
+  S-->>B: 200 { message: 'Logged out successfully' }
+```
+
+---
+
+## Backend Implementation
+
+Project layout (relevant parts):
+
+```
+server/src/
+├── controllers/
+│   ├── AuthControllers.ts       # login, logout, getMe
+│   └── index.ts
+├── middlewares/
+│   └── auth.ts                  # requireAuth
+├── models/
+│   └── User.ts
+└── routes/
+    ├── AuthRoutes.ts            # e.g. /auth/login, /auth/logout
+    └── UsersRoutes.ts           # /users/me (protected)
+```
+
+### Login Controller
+
+File: `server/src/controllers/AuthControllers.ts`
+
+```typescript
+import { Request, Response } from 'express';
+import { User } from '#models';
+import jwt from 'jsonwebtoken';
+import bcrypt from 'bcrypt';
+
+export const login = async (req: Request, res: Response) => {
+  const { email, password } = req.body;
+  if (!email || !password) {
+    return res.status(400).json({ message: 'Email and password are required' });
+  }
+  const user = await User.findOne({ email });
+  if (!user || !user.password) {
+    return res.status(401).json({ message: 'Invalid credentials' });
+  }
+
+  const isPasswordValid = await bcrypt.compare(password, user.password);
+  if (!isPasswordValid) {
+    return res.status(401).json({ message: 'Invalid credentials' });
+  }
+
+  const jwtSecret = process.env.JWT_SECRET || 'devsecret';
+  const token = jwt.sign({ userId: user._id }, jwtSecret, { expiresIn: '7d' });
+
+  res.cookie('token', token, {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production',
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+  });
+
+  const { _id, userName, image, createdAt, updatedAt } = user;
+  return res.json({
+    user: { _id, userName, email, image, createdAt, updatedAt },
+  });
+};
+```
+
+### Logout Controller
+
+```typescript
+export const logout = (req: Request, res: Response) => {
+  res.clearCookie('token', {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production',
+  });
+  res.status(200).json({ message: 'Logged out successfully' });
+};
+```
+
+### GetMe Controller
+
+```typescript
+export const getMe = async (req: Request, res: Response) => {
+  const userId = (req as any).userId as string | undefined;
+  if (!userId) {
+    return res.status(401).json({ message: 'Unauthorized' });
+  }
+  const user = await User.findById(userId).select('-password');
+  if (!user) {
+    return res.status(404).json({ message: 'User not found' });
+  }
+  return res.json({ user });
+};
+```
+
+### requireAuth Middleware
+
+File: `server/src/middlewares/auth.ts`
+
+```typescript
+import { Request, Response, NextFunction } from 'express';
+import jwt from 'jsonwebtoken';
+
+export const requireAuth = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): void => {
+  const token = req.cookies?.token;
+  if (!token) {
+    res
+      .status(401)
+      .json({ success: false, message: 'Authentication required' });
+    return;
+  }
+  try {
+    const jwtSecret = process.env.JWT_SECRET || 'devsecret';
+    const payload = jwt.verify(token, jwtSecret) as { userId: string };
+    (req as any).userId = payload.userId;
+    next();
+  } catch {
+    res.status(401).json({ success: false, message: 'Invalid token' });
+  }
+};
+```
+
+---
+
+## Frontend Implementation
+
+### Axios Configuration
+
+File: `client/src/utils/api.ts`
+
+```typescript
+import axios from 'axios';
+
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+
+const api = axios.create({
+  baseURL: API_BASE_URL,
+  withCredentials: true,
+});
+
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login';
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
+export default api;
+```
+
+### Checking Authentication Status
+
+File: `client/src/components/Nav.tsx`
+
+```tsx
+useEffect(() => {
+  const checkAuth = async () => {
+    try {
+      const res = await api.get('/users/me');
+      setIsAuthenticated(res.status === 200 && !!res.data.user);
+    } catch {
+      setIsAuthenticated(false);
+    } finally {
+      setLoading(false);
+    }
+  };
+  checkAuth();
+}, []);
+```
+
+Alternate helper: `client/src/utils/auth.ts`
+
+```typescript
+export const getUser = async (): Promise<User | null> => {
+  try {
+    const res = await fetch('/users/me', { credentials: 'include' });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.user || null;
+  } catch {
+    return null;
+  }
+};
+```
+
+---
+
+## Core Concepts
+
+### What is JWT?
+
+A JSON Web Token is a compact, URL-safe string with three parts: `header.payload.signature` (base64url encoded). The server signs the token; clients send it back; the server verifies it.
+
+Example payload:
+
+```json
+{ "userId": "64f0b2d2e9b...", "iat": 1697400000, "exp": 1698004800 }
+```
+
+Notes:
+
+- JWT is signed (integrity), not encrypted (confidentiality). Don’t put secrets in it.
+- Keep payload minimal (e.g., only `userId`).
+
+### What is bcrypt?
+
+Password hashing function designed for secure password storage. Use `bcrypt.compare()` to validate a login attempt against a stored hash.
+
+### What are Cookies?
+
+Small key/value pairs stored by the browser and sent automatically with matching requests.
+
+Important attributes:
+
+- `HttpOnly`: not accessible to JS (XSS protection)
+- `Secure`: only over HTTPS (enable in production)
+- `SameSite=Lax`: mitigates CSRF for most navigation cases
+- `Max-Age`: cookie lifetime
+
+---
+
+## Security Considerations
+
+- Use a strong `JWT_SECRET` and keep it out of source control.
+- Set cookie flags: `HttpOnly`, `Secure` (in production), `SameSite`.
+- Check token expiration; return 401 if expired.
+- Consider CSRF protections for state-changing cross-site requests.
+- Limit JWT payload to necessary claims (e.g., `userId`).
+
+---
+
+## Common Pitfalls & Troubleshooting
+
+- "Invalid user ID" in logs: cookie not sent or JWT verification failed; ensure `withCredentials: true` (axios) or `credentials: 'include'` (fetch), and that CORS is configured with `credentials: true` and the correct `origin`.
+- Cookie not set in dev: if not using HTTPS, `secure` must be false; verify `Set-Cookie` in Network tab.
+- 401 redirect loops: avoid redirecting to `/login` if already there.
+
+---
+
+## Testing Locally
+
+```bash
+# Server
+cd server
+npm install
+npm run dev
+
+# Client
+cd ../client
+npm install
+npm run dev
+```
+
+In the browser DevTools:
+
+- On login, verify the `Set-Cookie` response header.
+- On `/users/me`, confirm the `Cookie` request header is present.
+- After logout, confirm the cookie is cleared.
+
+---
+
+## Summary
+
+- Auth flow: Login → Set cookie → Verify on protected routes → Logout.
+- Server signs and verifies JWT; client never reads the httpOnly cookie.
+- Middleware centralizes authorization; controllers stay simple.
+- Use proper cookie flags and keep JWT payload minimal.
+
 # Authentication & Authorization with Cookies + JWT# Real Estate Project - Clean Documented Code with Swagger/OpenAPI
 
 **A Complete Lecture on Implementing Secure Authentication**## 🎯 Why Documentation Matters
@@ -100,21 +449,17 @@ This project uses a **cookie-based JWT approach**:
 
 ### What is JWT?
 
-`````bash
-
 **JSON Web Token (JWT)** is an open standard (RFC 7519) for securely transmitting information between parties as a JSON object.# Start the server
 
 cd server
 
-#### Structure of a JWT      description: 'Professional API with clean documentation',
+#### Structure of a JWT description: 'Professional API with clean documentation',
 
-    },
+A JWT consists of three parts separated by dots (`.`): ,
 
-A JWT consists of three parts separated by dots (`.`):  },
+apis: [
 
-  apis: [
-
-```    './src/schemas/*.ts', // Zod validation schemas
+`````'./src/schemas/*.ts', // Zod validation schemas
 
 header.payload.signature    './src/docs/*.yaml', // Separated documentation
 
@@ -240,7 +585,7 @@ const hashedPassword = await bcrypt.hash(plainPassword, 10); // 10 is the salt r
 
 // Result: $2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy// Documentation references these schemas automatically!
 
-````
+`````
 
 **Verifying a password:**---
 
@@ -1166,4 +1511,7 @@ console.log('Expired:', isExpired);
 ---
 
 **Questions or issues?** Check the code in the files mentioned above or test the flow locally following the steps in this README.
-`````
+
+```
+
+```
