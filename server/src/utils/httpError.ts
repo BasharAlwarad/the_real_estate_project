@@ -1,5 +1,16 @@
-export const throwHttpError = (message, status = 500) => {
-  const error = new Error(message) as Error & { cause?: { status } };
+interface HttpErrorCause {
+  status: number;
+}
+
+interface HttpError extends Error {
+  cause?: HttpErrorCause;
+}
+
+export const throwHttpError = (
+  message: string,
+  status: number = 500
+): never => {
+  const error = new Error(message) as HttpError;
   error.cause = { status };
   throw error;
 };

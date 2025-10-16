@@ -35,6 +35,16 @@ export const login = async (req: Request, res: Response) => {
     user: { _id, userName, email, image, createdAt, updatedAt },
   });
 };
+
+export const logout = (req: Request, res: Response) => {
+  res.clearCookie('token', {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production',
+  });
+  res.status(200).json({ message: 'Logged out successfully' });
+};
+
 // Create user controller (example, add to your user controller file)
 
 export const getMe = async (req: Request, res: Response) => {
