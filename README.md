@@ -1,458 +1,350 @@
-# Real Estate Project - Clean Documented Code with Swagger/OpenAPI
+# Real Estate Project - JWT & Refresh Token Authentication
 
-## 🎯 Why Documentation Matters
+## 🎯 What You'll Learn
 
-### The Problem: Undocumented Code
+This branch teaches **JWT authentication with refresh tokens** - a professional pattern used in production applications to keep users logged in securely.
 
-```typescript
-// ❌ What does this endpoint do? What does it expect? What does it return?
-app.post('/users', (req, res) => {
-  // Mystery function - good luck figuring it out!
-});
-```
+### **Key Concepts**
 
-### The Solution: Clean Documented Code
+- What is **JWT (JSON Web Token)**
+- What is a **Refresh Token** and why we need it
+- How to implement **automatic token refresh**
+- How to store tokens **securely** with httpOnly cookies
+- How to protect routes with **authentication middleware**
 
-```typescript
-// ✅ Clear, self-documenting code with proper API documentation
-/**
- * Creates a new user account
- * @route POST /users
- * @param {UserCreateRequest} req.body - User registration data
- * @returns {UserResponse} 201 - User created successfully
- * @returns {ErrorResponse} 400 - Validation error
- */
-export const createUser = async (req: Request, res: Response) => {
-  // Clean, readable implementation
-};
-```
+---
 
-## 📚 Learning Objectives
+## 🔑 The Two-Token System
 
-By exploring this branch, you'll understand:
+### **Access Token** (Short-lived: 15 minutes)
 
-### **🔍 Core Concepts**
+- Used for **every API request**
+- Contains user information (userId)
+- **Expires quickly** for security
+- Stored as **httpOnly cookie**
 
-- **Why documentation is critical** for professional development
-- **The cost of poor documentation** on team productivity
-- **What is Swagger/OpenAPI** and why it's industry standard
-- **The difference between YAML and JSON** for configuration
-- **Clean code principles** for maintainable projects
+### **Refresh Token** (Long-lived: 7 days)
 
-### **🛠️ Practical Implementation**
-
-- **How to implement Swagger** in a TypeScript Express server
-- **How to create reusable schema components**
-- **How to generate interactive API documentation**
-- **How to maintain documentation** alongside code changes
+- Used to **get new access tokens**
+- **Hashed in database** for security
+- Allows users to **stay logged in**
+- Also stored as **httpOnly cookie**
 
 ---
 
 ## 🚀 Quick Start
 
-npm run dev
-
-# Visit the interactive documentation
-
-open http://localhost:3000/docs
-
-````
-
-### 2. Compare Code Organization
-
 ```bash
-# Before: Large files with inline documentation
-git checkout main
-code server/src/controllers/UsersControllers.ts  # ~320 lines!
+# Install dependencies
+npm install
 
-# After: Clean, organized structure
-git checkout feature/swagger_openAPI
-code server/src/controllers/UsersControllers.ts  # ~70 lines ✨
-code server/src/docs/users.yaml                  # Clean documentation
-````
+# Start server
+cd server && npm run dev
 
----
-
-#### **Developer Productivity Impact**
-
-'Hey, what fields does POST /users expect?';
-'Is email required?';
-'What error codes do you return?';
-
-// With docs: 2 minutes of self-service
-// 1. Open http://localhost:3000/docs
-// 2. See exact request/response format
-// 3. Test endpoint directly in browser
-// 4. Copy working code example
-
-````
-
-#### **Real-World ROI (Return on Investment)**
-
-| Metric            | Without Docs | With Docs | Improvement       |
-| ----------------- | ------------ | --------- | ----------------- |
-| Support Questions | 20/week      | 5/week    | **75% reduction** |
-| Integration Time  | 2 days       | 4 hours   | **75% faster**    |
-| Bug Reports       | 15/week      | 4/week    | **73% fewer**     |
-| Onboarding Time   | 2 weeks      | 3 days    | **85% faster**    |
-
-### Professional Standards
-
-- ✅ **Enterprise requirement**: Most companies mandate API documentation
-- ✅ **Team collaboration**: Frontend/backend teams work independently
-- ✅ **Client integration**: External partners need clear specifications
-- ✅ **Maintenance**: Future developers understand the system
-
----
-
-## 📖 Chapter 2: Understanding Swagger & YAML
-
-### What is Swagger/OpenAPI?
-
-**Swagger/OpenAPI** is an industry-standard specification for describing REST APIs.
-
-```yaml
-# This YAML description...
-/users/{id}:
-  get:
-    summary: Get user by ID
-    parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: string
-    responses:
-      200:
-        description: User found
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/User'
-# ...generates this interactive documentation automatically! 🎉
-````
-
-### YAML vs JSON vs Markdown
-
-| Format       | Best For                 | Readability | Machine Parsable | Use Case              |
-| ------------ | ------------------------ | ----------- | ---------------- | --------------------- |
-| **YAML**     | Configuration, API specs | ⭐⭐⭐⭐⭐  | ✅               | Swagger documentation |
-| **JSON**     | Data exchange            | ⭐⭐⭐      | ✅               | API responses         |
-| **Markdown** | Human documentation      | ⭐⭐⭐⭐⭐  | ❌               | README files, guides  |
-
-### Why YAML for API Documentation?
-
-```yaml
-# YAML: Clean and readable
-user:
-  name: John Doe
-  email: john@example.com
-  preferences:
-    - theme: dark
-    - language: en
+# Start client
+cd client && npm run dev
 ```
 
-```json
-// JSON: Verbose and cluttered
+---
+
+## 📖 How It Works
+
+### **Step 1: User Logs In**
+
+```typescript
+// POST /auth/login
 {
-  "user": {
-    "name": "John Doe",
-    "email": "john@example.com",
-    "preferences": [{ "theme": "dark" }, { "language": "en" }]
-  }
+  "email": "user@example.com",
+  "password": "password123"
 }
 ```
 
----
+**What happens:**
 
-## 📖 Chapter 3: Implementation in TypeScript Express
+1. Server verifies password
+2. Creates **access token** (15 min)
+3. Creates **refresh token** (7 days)
+4. Hashes refresh token with bcrypt
+5. Saves hashed token to database
+6. Sends **both tokens as cookies**
 
-### Project Structure: Before vs After
-
-#### **Before: Mixed Concerns**
-
-```
-server/src/
-├── controllers/
-│   ├── UsersControllers.ts     # 320 lines (80% documentation!)
-│   └── listingsControllers.ts  # 250 lines (70% documentation!)
-└── schemas/
-    ├── user.ts                 # Schema + docs mixed
-    └── listing.ts              # Schema + docs mixed
-```
-
-#### **After: Separation of Concerns**
-
-```
-server/src/
-├── controllers/
-│   ├── UsersControllers.ts     # 70 lines (pure business logic) ✨
-│   └── listingsControllers.ts  # 60 lines (pure business logic) ✨
-├── docs/                       # 📁 NEW: Documentation folder
-│   ├── main.yaml              # API info, servers, tags
-│   ├── users.yaml             # User endpoint documentation
-│   ├── listings.yaml          # Listing endpoint documentation
-│   └── examples.ts            # Reusable examples
-└── schemas/
-    ├── user.ts                # Pure Zod validation schemas
-    └── listing.ts             # Pure Zod validation schemas
-```
-
-### Step-by-Step Implementation
-
-#### **Step 1: Install Dependencies**
-
-```bash
-npm install swagger-jsdoc swagger-ui-express
-npm install --save-dev @types/swagger-jsdoc @types/swagger-ui-express
-```
-
-#### **Step 2: Configure Swagger Documentation**
+### **Step 2: User Makes Requests**
 
 ```typescript
-// server/src/routes/docs.ts
-import swaggerJSDoc from 'swagger-jsdoc';
-import swaggerUi from 'swagger-ui-express';
-
-const options = {
-  definition: {
-    openapi: '3.1.0',
-    info: {
-      title: 'Real Estate API',
-      version: '1.0.0',
-      description: 'Professional API with clean documentation',
-    },
-  },
-  apis: [
-    './src/schemas/*.ts', // Zod validation schemas
-    './src/docs/*.yaml', // Separated documentation
-  ],
-};
-
-const swaggerSpec = swaggerJSDoc(options);
-router.use('/', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+// GET /users/me
+// Cookies sent automatically by browser
 ```
 
-#### **Step 3: Create Separated Documentation**
+**What happens:**
 
-```yaml
-# server/src/docs/users.yaml
-openapi: 3.1.0
-paths:
-  /users:
-    get:
-      tags: [Users]
-      summary: Get all users
-      description: Retrieve all users from the database
-      responses:
-        200:
-          description: Successfully retrieved users
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/User'
-```
+1. Middleware reads **accessToken** from cookie
+2. Verifies JWT is valid
+3. Extracts userId from token
+4. Request continues ✅
 
-#### **Step 4: Clean Controllers**
+### **Step 3: Access Token Expires**
+
+After 15 minutes, access token expires.
+
+**What happens:**
+
+1. User makes request
+2. Server returns **401 Unauthorized**
+3. Client **automatically** calls `/auth/refresh`
+4. Server verifies refresh token
+5. Issues **new access token**
+6. Client **retries original request**
+7. User never notices! ✨
+
+### **Step 4: User Logs Out**
 
 ```typescript
-// server/src/controllers/UsersControllers.ts
-import { User } from '#models';
-import { httpErrors } from '#utils';
-
-// 📝 API documentation: src/docs/users.yaml
-
-export const getAllUsers = async (req: Request, res: Response) => {
-  const users = await User.find({});
-  res.json(users);
-};
-
-export const createUser = async (req: Request, res: Response) => {
-  const newUser = new User(req.body);
-  const savedUser = await newUser.save();
-  res.status(201).json({
-    message: 'User created successfully',
-    user: savedUser,
-  });
-};
+// POST /auth/logout
 ```
 
-#### **Step 5: Maintain Schema Validation**
+**What happens:**
 
-```typescript
-// server/src/schemas/user.ts - Keep Zod schemas for validation
-export const userCreateSchema = z.object({
-  userName: z.string().min(2).max(50),
-  email: z.string().email(),
-  password: z.string().min(6),
-});
-
-// Documentation references these schemas automatically!
-```
+1. Server finds refresh token in database
+2. Deletes it from database
+3. Clears both cookies
+4. User is logged out ✅
 
 ---
 
-## 📖 Chapter 4: Advanced Organization Patterns
+## 📁 Key Files Explained
 
-### Documentation Architecture
+### **Backend**
 
-#### **Modular Documentation**
+| File                                        | Purpose                                |
+| ------------------------------------------- | -------------------------------------- |
+| `server/src/controllers/AuthControllers.ts` | Login, refresh, logout logic           |
+| `server/src/middlewares/auth.ts`            | Protects routes, verifies access token |
+| `server/src/models/RefreshToken.ts`         | Database model for refresh tokens      |
+| `server/src/routes/AuthRoutes.ts`           | Auth endpoints                         |
 
-```yaml
-# main.yaml - Core API information
-info:
-  title: Real Estate API
-  version: 1.0.0
+### **Frontend**
 
-# users.yaml - User-specific endpoints
-paths:
-  /users: { /* user endpoints */ }
+| File                            | Purpose                                |
+| ------------------------------- | -------------------------------------- |
+| `client/src/utils/api.ts`       | **Auto-refresh interceptor**           |
+| `client/src/pages/Login.tsx`    | Login form                             |
+| `client/src/components/Nav.tsx` | Shows login/logout based on auth state |
 
-# listings.yaml - Listing-specific endpoints
-paths:
-  /listings: { /* listing endpoints */ }
-```
+---
 
-#### **Reusable Components**
+## 🔍 Code Walkthrough
 
-```yaml
-# examples.ts - Shared examples and parameters
-components:
-  parameters:
-    UserIdParam:
-      name: id
-      in: path
-      required: true
-      schema:
-        type: string
-        format: objectid
-
-  examples:
-    UserExample:
-      value:
-        _id: '507f1f77bcf86cd799439011'
-        userName: 'john_doe'
-        email: 'john@example.com'
-```
-
-### Alternative Organization Methods
-
-#### **Method 1: External JSON Files**
+### **1. Login Flow** (`AuthControllers.ts`)
 
 ```typescript
-import openapi from './docs/openapi.json';
-const swaggerSpec = openapi;
-```
+export const login = async (req: Request, res: Response) => {
+  // 1. Verify password
+  const isPasswordValid = await bcrypt.compare(password, user.password);
 
-#### **Method 2: TypeScript Configuration Objects**
+  // 2. Create tokens
+  const accessToken = jwt.sign({ userId }, secret, { expiresIn: '15m' });
+  const refreshToken = jwt.sign({ userId }, secret, { expiresIn: '7d' });
 
-```typescript
-// docs/userEndpoints.ts
-export const userEndpoints = {
-  '/users': {
-    get: {
-      /* documentation */
-    },
-  },
+  // 3. Hash and save refresh token
+  const hashedRefreshToken = await bcrypt.hash(refreshToken, 10);
+  await RefreshToken.create({ userId, token: hashedRefreshToken, expiresAt });
+
+  // 4. Send as cookies
+  res.cookie('accessToken', accessToken, { httpOnly: true, maxAge: 15min });
+  res.cookie('refreshToken', refreshToken, { httpOnly: true, maxAge: 7days });
+
+  // 5. Return user info
+  res.json({ user });
 };
 ```
 
-#### **Method 3: Decorator-Based (Advanced)**
+### **2. Auth Middleware** (`auth.ts`)
 
 ```typescript
-@ApiTags('Users')
-@ApiResponse({ status: 200, description: 'Success' })
-export class UsersController {
-  @Get()
-  @ApiOperation({ summary: 'Get all users' })
-  getAllUsers() {
-    /* implementation */
+export const requireAuth = (req, res, next) => {
+  // 1. Read access token from cookie
+  const token = req.cookies?.accessToken;
+
+  // 2. Verify it's valid
+  const payload = jwt.verify(token, secret);
+
+  // 3. Attach userId to request
+  req.userId = payload.userId;
+
+  // 4. Continue
+  next();
+};
+```
+
+### **3. Refresh Endpoint** (`AuthControllers.ts`)
+
+```typescript
+export const refresh = async (req: Request, res: Response) => {
+  // 1. Get refresh token from cookie
+  const refreshToken = req.cookies?.refreshToken;
+
+  // 2. Verify JWT
+  const payload = jwt.verify(refreshToken, secret);
+
+  // 3. Find in database (compare with bcrypt)
+  const tokenDocs = await RefreshToken.find({ userId: payload.userId });
+  let validToken = null;
+  for (const doc of tokenDocs) {
+    if (await bcrypt.compare(refreshToken, doc.token)) {
+      validToken = doc;
+      break;
+    }
   }
-}
+
+  // 4. Check if expired
+  if (validToken.expiresAt < new Date()) {
+    return res.status(401).json({ message: 'Expired' });
+  }
+
+  // 5. Create NEW access token
+  const newAccessToken = jwt.sign({ userId }, secret, { expiresIn: '15m' });
+
+  // 6. Send as cookie
+  res.cookie('accessToken', newAccessToken, { httpOnly: true, maxAge: 15min });
+
+  res.json({ message: 'Token refreshed' });
+};
+```
+
+### **4. Auto-Refresh Interceptor** (`api.ts`)
+
+```typescript
+api.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    // If 401 error and haven't retried yet
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+
+      try {
+        // Try to refresh token
+        await api.post('/auth/refresh');
+
+        // Retry original request with new access token
+        return api.request(originalRequest);
+      } catch {
+        // Refresh failed - redirect to login
+        window.location.href = '/login';
+      }
+    }
+
+    return Promise.reject(error);
+  }
+);
 ```
 
 ---
 
-## 🎯 Testing & Validation
+## 🔒 Security Features
 
-### Interactive Testing
+### **1. httpOnly Cookies**
+
+- JavaScript **cannot access** the tokens
+- Protects against **XSS attacks**
+
+### **2. Hashed Refresh Tokens**
+
+- Stored with **bcrypt** in database
+- If database is hacked, tokens are **useless**
+
+### **3. Short-lived Access Tokens**
+
+- Expire after **15 minutes**
+- Limits damage if stolen
+
+### **4. Database Storage**
+
+- Can **revoke** refresh tokens anytime
+- Logout **actually works**
+
+---
+
+## 🎯 Testing the Flow
+
+### **1. Test Login**
 
 ```bash
-# 1. Start the server
-npm run dev
+# Login
+curl -X POST http://localhost:3000/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"test@test.com","password":"password"}' \
+  -c cookies.txt
 
-# 2. Open documentation
-open http://localhost:3000/docs
-
-# 3. Test endpoints directly in browser
-# 4. See real-time validation
-# 5. Copy working code examples
+# Check cookies
+cat cookies.txt
+# You'll see: accessToken and refreshToken
 ```
 
-### Documentation Quality Checklist
+### **2. Test Protected Route**
 
-- ✅ **All endpoints documented** with examples
-- ✅ **Request/response schemas** clearly defined
-- ✅ **Error responses** documented with codes
-- ✅ **Parameters** have descriptions and examples
-- ✅ **Authentication** requirements specified
-- ✅ **Interactive testing** works for all endpoints
+```bash
+# Use access token
+curl http://localhost:3000/users/me -b cookies.txt
+
+# Response: User data ✅
+```
+
+### **3. Test Auto-Refresh**
+
+```bash
+# Wait 15 minutes (or change maxAge to 10 seconds for testing)
+# Make request again
+curl http://localhost:3000/users/me -b cookies.txt
+
+# First attempt: 401
+# Auto-refresh happens
+# Retry: 200 ✅
+```
+
+### **4. Test Logout**
+
+```bash
+curl -X POST http://localhost:3000/auth/logout -b cookies.txt
+
+# Cookies cleared
+# Token deleted from database
+```
 
 ---
 
-## 🏆 Key Learning Outcomes
+## 💡 Learning Exercises
 
-### **Professional Skills Gained**
+### **Beginner**
 
-1. **Clean Code Principles** - Separation of concerns
-2. **Industry Standards** - OpenAPI/Swagger expertise
-3. **Team Collaboration** - Self-documenting APIs
-4. **Maintenance Excellence** - Organized, scalable structure
-5. **Professional Portfolio** - Enterprise-grade documentation
+1. Add console.logs to trace the entire login flow
+2. Change token expiry times and observe behavior
+3. Add a "remember me" checkbox (longer refresh token)
 
-### **Before vs After Comparison**
+### **Intermediate**
 
-| Aspect              | Before            | After           | Benefit                    |
-| ------------------- | ----------------- | --------------- | -------------------------- |
-| **File Size**       | 320+ lines        | 70 lines        | **77% reduction**          |
-| **Readability**     | Mixed concerns    | Pure logic      | **Clean separation**       |
-| **Maintenance**     | Hard to find code | Easy navigation | **Developer friendly**     |
-| **Documentation**   | Inline chaos      | Organized files | **Professional structure** |
-| **Team Onboarding** | 2 weeks           | 2 days          | **90% faster**             |
+4. Add refresh token rotation (new refresh token on each refresh)
+5. Implement "logout all devices" (delete all user tokens)
+6. Add token metadata (IP, device, last used)
+
+### **Advanced**
+
+7. Implement token reuse detection
+8. Add multi-tab coordination with BroadcastChannel
+9. Create an admin panel to view active sessions
 
 ---
 
 ## 📚 Additional Resources
 
-### **Learning Materials**
-
-- [OpenAPI Specification](https://swagger.io/specification/) - Official documentation
-- [YAML Tutorial](https://yaml.org/spec/1.2/spec.html) - Understanding YAML syntax
-- [Clean Code Principles](https://blog.cleancoder.com/) - Robert C. Martin's principles
-- [API Design Best Practices](https://restfulapi.net/) - REST API guidelines
-
-### **Tools & Extensions**
-
-- [Swagger UI](https://swagger.io/tools/swagger-ui/) - Interactive documentation
-- [Swagger Editor](https://editor.swagger.io/) - Online YAML editor
-- [VS Code Swagger Viewer](https://marketplace.visualstudio.com/items?itemName=Arjun.swagger-viewer) - Preview docs in VS Code
-- [Postman](https://www.postman.com/) - API testing (alternative to Swagger UI)
-
-### **Real-World Examples**
-
-- [GitHub API](https://docs.github.com/en/rest) - Professional API documentation
-- [Stripe API](https://stripe.com/docs/api) - Best-in-class developer experience
-- [Twitter API](https://developer.twitter.com/en/docs) - Comprehensive documentation
+- [JWT.io](https://jwt.io/) - Decode and verify JWTs
+- [OWASP Auth Cheatsheet](https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html) - Security best practices
+- [bcrypt](https://github.com/kelektiv/node.bcrypt.js) - Password hashing library
 
 ---
 
 ## 🎓 Next Steps
 
-### **Immediate Actions**
-
-1. ✅ **Explore the documentation** at `http://localhost:3000/docs`
-2. ✅ **Compare file sizes** between main and this branch
-3. ✅ **Test API endpoints** using the interactive interface
-4. ✅ **Examine the organized structure** in `src/docs/`
+1. ✅ Read through `AuthControllers.ts` - understand each step
+2. ✅ Test login/logout flow in the browser
+3. ✅ Examine the auto-refresh interceptor in `api.ts`
+4. ✅ Try the exercises above to deepen understanding

@@ -2,7 +2,10 @@ import { Request, Response } from 'express';
 import { User, RefreshToken } from '#models';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
-import crypto from 'crypto';
+
+// TEACHING: This controller handles login, refresh, and logout using JWT and refresh tokens.
+// - Access token: short-lived, sent as httpOnly cookie
+// - Refresh token: long-lived, sent as httpOnly cookie, allows getting new access tokens
 
 export const login = async (req: Request, res: Response) => {
   const { email, password } = req.body;
@@ -31,11 +34,8 @@ export const login = async (req: Request, res: Response) => {
     expiresIn: '7d',
   });
 
-  // Hash refresh token before storing in database
-  const hashedRefreshToken = crypto
-    .createHash('sha256')
-    .update(refreshToken)
-    .digest('hex');
+  // Hash refresh token before storing in database using bcrypt
+  const hashedRefreshToken = await bcrypt.hash(refreshToken, 10);
 
   // Save refresh token to database
   const expiresAt = new Date();
@@ -52,7 +52,8 @@ export const login = async (req: Request, res: Response) => {
     httpOnly: true,
     sameSite: 'lax',
     secure: process.env.NODE_ENV === 'production',
-    maxAge: 15 * 60 * 1000, // 15 minutes
+    maxAge: 10 * 1000, // 15 minutes
+    // maxAge: 15 * 60 * 1000, // 15 minutes
   });
 
   // Set refresh token cookie (long-lived)
@@ -60,7 +61,8 @@ export const login = async (req: Request, res: Response) => {
     httpOnly: true,
     sameSite: 'lax',
     secure: process.env.NODE_ENV === 'production',
-    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    maxAge: 20 * 1000, // 7 days
+    // maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
   });
 
   // Return user info (excluding password)
@@ -94,6 +96,13 @@ export const getMe = async (req: Request, res: Response) => {
  * 4. Issues new short-lived access token
  */
 export const refresh = async (req: Request, res: Response) => {
+  // TEACHING: This endpoint lets the user get a new access token using a valid refresh token
+  // 1. Checks refresh token cookie
+  // 2. Verifies JWT
+  // 3. Looks up hashed token in DB
+  // 4. If valid, sends new access token as cookie
+  // NOTE: In real apps, rotate refresh tokens for more security
+
   const refreshToken = req.cookies?.refreshToken;
 
   if (!refreshToken) {
@@ -105,26 +114,29 @@ export const refresh = async (req: Request, res: Response) => {
     const jwtSecret = process.env.JWT_SECRET || 'devsecret';
     const payload = jwt.verify(refreshToken, jwtSecret) as { userId: string };
 
-    // Hash the refresh token to compare with database
-    const hashedRefreshToken = crypto
-      .createHash('sha256')
-      .update(refreshToken)
-      .digest('hex');
-
-    // Check if refresh token exists in database
-    const tokenDoc = await RefreshToken.findOne({
+    // Find all refresh tokens for this user
+    const tokenDocs = await RefreshToken.find({
       userId: payload.userId,
-      token: hashedRefreshToken,
     });
 
-    if (!tokenDoc) {
+    // Check each token to find a match using bcrypt.compare
+    let validTokenDoc = null;
+    for (const tokenDoc of tokenDocs) {
+      const isMatch = await bcrypt.compare(refreshToken, tokenDoc.token);
+      if (isMatch) {
+        validTokenDoc = tokenDoc;
+        break;
+      }
+    }
+
+    if (!validTokenDoc) {
       return res.status(401).json({ message: 'Invalid refresh token' });
     }
 
     // Check if token is expired
-    if (tokenDoc.expiresAt < new Date()) {
+    if (validTokenDoc.expiresAt < new Date()) {
       // Clean up expired token
-      await RefreshToken.deleteOne({ _id: tokenDoc._id });
+      await RefreshToken.deleteOne({ _id: validTokenDoc._id });
       return res.status(401).json({ message: 'Refresh token expired' });
     }
 
@@ -145,4 +157,58 @@ export const refresh = async (req: Request, res: Response) => {
   } catch (error) {
     return res.status(401).json({ message: 'Invalid refresh token' });
   }
+};
+
+/**
+ * Logout Controller
+ *
+ * Clears both access and refresh token cookies and removes refresh token from database.
+ * Teaching points:
+ * 1. Clear both cookies
+ * 2. Delete refresh token from database to revoke it
+ */
+export const logout = async (req: Request, res: Response) => {
+  // TEACHING: This endpoint logs the user out by clearing both cookies and deleting the refresh token from DB
+  const refreshToken = req.cookies?.refreshToken;
+
+  // If there's a refresh token, delete it from database
+  if (refreshToken) {
+    try {
+      // Verify the JWT to get userId
+      const jwtSecret = process.env.JWT_SECRET || 'devsecret';
+      const payload = jwt.verify(refreshToken, jwtSecret) as { userId: string };
+
+      // Find all refresh tokens for this user
+      const tokenDocs = await RefreshToken.find({
+        userId: payload.userId,
+      });
+
+      // Find and delete the matching token using bcrypt.compare
+      for (const tokenDoc of tokenDocs) {
+        const isMatch = await bcrypt.compare(refreshToken, tokenDoc.token);
+        if (isMatch) {
+          await RefreshToken.deleteOne({ _id: tokenDoc._id });
+          break;
+        }
+      }
+    } catch (error) {
+      // Continue with logout even if deletion fails
+      console.error('Error deleting refresh token:', error);
+    }
+  }
+
+  // Clear both cookies
+  res.clearCookie('accessToken', {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production',
+  });
+
+  res.clearCookie('refreshToken', {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production',
+  });
+
+  res.status(200).json({ message: 'Logged out successfully' });
 };

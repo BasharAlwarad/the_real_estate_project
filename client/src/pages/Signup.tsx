@@ -30,7 +30,8 @@ const Signup = () => {
 
     setIsLoading(true);
     try {
-      await api.post(`/users/test`, {
+      // TEACHING: Signup sends user info to backend, which creates user and stores hashed password
+      await api.post(`/users/`, {
         userName,
         email,
         password,
