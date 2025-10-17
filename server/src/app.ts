@@ -11,6 +11,11 @@ const PORT = process.env.PORT;
 app.use(cors());
 app.use(express.json());
 
+app.use((req, res, next) => {
+  console.log('Hello from app');
+  next();
+});
+
 // Initialize database
 mongoDbConnect();
 // Routes
@@ -22,7 +27,14 @@ app.get('/', (req, res) => {
   }
 });
 
-app.use(`/listings`, listingsRouter);
+app.use(
+  `/listings`,
+  (req, res, next) => {
+    console.log('from the route');
+    next();
+  },
+  listingsRouter
+);
 app.use(`/users`, usersRouter);
 
 // 404 catch-all route - must be last

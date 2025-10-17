@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 
 export const getAllListings = async (req, res) => {
   try {
+    console.log(req.amer);
     const listings = await Listing.find({});
     res.json(listings);
   } catch (error) {
