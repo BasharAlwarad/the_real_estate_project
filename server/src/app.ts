@@ -27,12 +27,14 @@ app.get('/', (req, res) => {
   }
 });
 
-app.use(
-  `/listings`,
-  (req, res, next) => {
+const somehting=(req, res, next) => {
     console.log('from the route');
     next();
-  },
+  }
+
+app.use(
+  `/listings`,
+  ,somehting,
   listingsRouter
 );
 app.use(`/users`, usersRouter);
