@@ -52,8 +52,7 @@ export const login = async (req: Request, res: Response) => {
     httpOnly: true,
     sameSite: 'lax',
     secure: process.env.NODE_ENV === 'production',
-    maxAge: 10 * 1000, // 15 minutes
-    // maxAge: 15 * 60 * 1000, // 15 minutes
+    maxAge: 15 * 60 * 1000, // 15 minutes
   });
 
   // Set refresh token cookie (long-lived)
@@ -61,8 +60,7 @@ export const login = async (req: Request, res: Response) => {
     httpOnly: true,
     sameSite: 'lax',
     secure: process.env.NODE_ENV === 'production',
-    maxAge: 20 * 1000, // 7 days
-    // maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
   });
 
   // Return user info (excluding password)
