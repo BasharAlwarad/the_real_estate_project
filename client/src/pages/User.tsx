@@ -197,7 +197,7 @@ const User = () => {
         response = await api.put(`/users/${user._id}`, payload);
       }
 
-      setUser(response.data.user);
+      setUser(response.data.data || response.data.user);
       setIsEditModalOpen(false);
       setError('');
 
