@@ -1,10 +1,8 @@
 import axios from 'axios';
-
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+import { API_CONFIG } from './config';
 
 const api = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: API_CONFIG.MAIN_SERVICE,
   withCredentials: true,
 });
 
@@ -46,8 +44,12 @@ api.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        // Try to refresh the access token
-        await api.post('/auth/refresh');
+        // Try to refresh the access token from auth service
+        await axios.post(
+          `${API_CONFIG.AUTH_SERVICE}/auth/refresh`,
+          {},
+          { withCredentials: true }
+        );
 
         isRefreshing = false;
 

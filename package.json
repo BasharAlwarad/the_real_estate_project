@@ -1,5 +1,37 @@
 {
+  "name": "the_real_estate_project",
+  "version": "1.0.0",
+  "description": "This project demonstrates **microservices architecture** with separate authentication service and main application server.",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "installall": "npm install && cd auth-service && npm install && cd ../server && npm install && cd ../client && npm install",
+    "dev": "concurrently --kill-others-on-fail \"npm run dev:auth\" \"npm run dev:server\" \"npm run dev:client\"",
+    "dev:auth": "cd auth-service && npm run dev",
+    "dev:server": "cd server && npm run dev",
+    "dev:client": "cd client && npm run dev",
+    "build": "npm run build:auth && npm run build:server && npm run build:client",
+    "build:auth": "cd auth-service && npm run build",
+    "build:server": "cd server && npm run build",
+    "build:client": "cd client && npm run build",
+    "start": "concurrently \"npm run start:auth\" \"npm run start:server\"",
+    "start:auth": "cd auth-service && npm start",
+    "start:server": "cd server && npm start",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "microservices",
+    "authentication",
+    "real-estate",
+    "jwt",
+    "nodejs",
+    "react"
+  ],
+  "author": "",
+  "license": "ISC",
   "devDependencies": {
-    "tsx": "^4.20.6"
+    "concurrently": "^9.2.1"
   }
 }

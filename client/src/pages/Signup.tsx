@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import api from '../utils/api';
+import authApi from '../utils/authApi';
 
 const Signup = () => {
   const [userName, setUserName] = useState('');
@@ -30,8 +30,8 @@ const Signup = () => {
 
     setIsLoading(true);
     try {
-      // TEACHING: Signup sends user info to backend, which creates user and stores hashed password
-      await api.post(`/users/`, {
+      // Signup via auth service - auto-logs in user
+      await authApi.post('/auth/signup', {
         userName,
         email,
         password,
@@ -43,8 +43,8 @@ const Signup = () => {
       setPassword('');
       setConfirmPassword('');
 
-      // Navigate to login or home page
-      navigate('/login');
+      // Navigate to home (user is already logged in)
+      navigate('/');
     } catch (error: unknown) {
       console.error('Error creating user:', error);
       const errorMessage = axios.isAxiosError(error)

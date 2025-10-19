@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import api from '../utils/api';
+import authApi from '../utils/authApi';
 import { isAxiosError } from 'axios';
 
 const Login: React.FC = () => {
@@ -14,7 +14,7 @@ const Login: React.FC = () => {
     setIsLoading(true);
 
     try {
-      await api.post('/auth/login', { email, password });
+      await authApi.post('/auth/login', { email, password });
       // Cookie is set by backend; reload to update nav/user state
       window.location.href = '/';
     } catch (err: unknown) {

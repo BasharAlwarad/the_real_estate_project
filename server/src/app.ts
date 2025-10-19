@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import { mongoDBConnect } from '#db';
-import { userRouter, listingRouter, docsRouter, authRouter } from '#routes';
+import { userRouter, listingRouter, docsRouter } from '#routes';
 import { errorHandler } from '#middlewares';
 
 /**
@@ -54,7 +54,8 @@ app.get('/', (req, res) => {
 app.use(`/listings`, listingRouter);
 app.use(`/users`, userRouter);
 app.use(`/docs`, docsRouter);
-app.use(`/auth`, authRouter);
+// Auth routes moved to auth-service (port 4000)
+// app.use(`/auth`, authRouter);
 
 app.use(errorHandler);
 

@@ -1,16 +1,24 @@
-# Real Estate Project - JWT & Refresh Token Authentication
+# Real Estate Project - Microservices Architecture
+
+## �️ Architecture Overview
+
+This project demonstrates **microservices architecture** with separate authentication service and main application server.
+
+### **Services**
+
+1. **Auth Service** (Port 4000) - Handles all authentication operations
+2. **Main Server** (Port 3000) - Handles business logic (users, listings)
+3. **Client** (Port 5173) - React frontend application
+
+---
 
 ## 🎯 What You'll Learn
 
-This branch teaches **JWT authentication with refresh tokens** - a professional pattern used in production applications to keep users logged in securely.
-
-### **Key Concepts**
-
-- What is **JWT (JSON Web Token)**
-- What is a **Refresh Token** and why we need it
-- How to implement **automatic token refresh**
-- How to store tokens **securely** with httpOnly cookies
-- How to protect routes with **authentication middleware**
+- **Microservices architecture** - Separating concerns into dedicated services
+- **JWT authentication with refresh tokens** - Professional auth pattern
+- **Service-to-service communication** - How microservices interact
+- **Shared JWT verification** - Stateless authentication across services
+- **httpOnly cookies** - Secure token storage
 
 ---
 
@@ -34,16 +42,40 @@ This branch teaches **JWT authentication with refresh tokens** - a professional 
 
 ## 🚀 Quick Start
 
+### **Option 1: Run All Services at Once** (Recommended)
+
 ```bash
-# Install dependencies
-npm install
+# First time setup - install all dependencies
+npm run installall
 
-# Start server
-cd server && npm run dev
-
-# Start client
-cd client && npm run dev
+# Start all services (auth-service, server, client)
+npm run dev
 ```
+
+### **Option 2: Run Services Individually**
+
+```bash
+# Terminal 1: Start Auth Service
+cd auth-service
+npm install
+npm run dev
+
+# Terminal 2: Start Main Server
+cd server
+npm run dev
+
+# Terminal 3: Start Client
+cd client
+npm run dev
+```
+
+**Access Points:**
+
+- Auth Service: http://localhost:4000
+- Main Server: http://localhost:3000
+- Client: http://localhost:5173
+
+> 💡 **Tip:** See [SCRIPTS_GUIDE.md](./SCRIPTS_GUIDE.md) for all available commands and detailed usage
 
 ---
 
