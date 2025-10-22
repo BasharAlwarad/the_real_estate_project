@@ -1,12 +1,5 @@
 import { Router } from 'express';
-import {
-  login,
-  signup,
-  logout,
-  refresh,
-  getMe,
-  verifyToken,
-} from '#controllers';
+import { login, signup, logout, refresh, getMe } from '#controllers';
 import { requireAuth } from '#middlewares';
 
 const authRouter = Router();
@@ -19,8 +12,5 @@ authRouter.post('/logout', logout);
 
 // Protected routes
 authRouter.get('/me', requireAuth, getMe);
-
-// Token verification (for inter-service communication)
-authRouter.post('/verify-token', verifyToken);
 
 export { authRouter };

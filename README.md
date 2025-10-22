@@ -1,5 +1,9 @@
 # Real Estate Project - Microservices Architecture
 
+## Connect with Me
+
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-Bashar%20AlWarad-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/bashar-alwarad-2a960b1b6/)
+
 ## �️ Architecture Overview
 
 This project demonstrates **microservices architecture** with separate authentication service and main application server.
@@ -16,9 +20,28 @@ This project demonstrates **microservices architecture** with separate authentic
 
 - **Microservices architecture** - Separating concerns into dedicated services
 - **JWT authentication with refresh tokens** - Professional auth pattern
-- **Service-to-service communication** - How microservices interact
-- **Shared JWT verification** - Stateless authentication across services
+- **Local JWT verification** - High-performance token validation
+- **Shared JWT secrets** - Stateless authentication across services
 - **httpOnly cookies** - Secure token storage
+
+---
+
+## 🏗️ Architecture Decision: Local Verification
+
+This project uses **local JWT verification** for authentication across microservices.
+
+### Why Local Verification?
+
+- ⚡ **Performance**: ~0.1-0.5ms verification time (vs 10-50ms with centralized)
+- 🎯 **Simplicity**: No extra network calls or service dependencies
+- 🔧 **Reliability**: No single point of failure
+- 💰 **Cost-effective**: Minimal infrastructure overhead
+
+### Trade-offs Accepted
+
+- JWT_SECRET must be shared across services (using environment variables)
+- Token revocation requires waiting for expiration (15 minutes for access tokens)
+- Auth logic is duplicated across services (but standardized)
 
 ---
 
@@ -79,7 +102,151 @@ npm run dev
 
 ---
 
-## 📖 How It Works
+## ⚙️ Environment Variables
+
+### Required in Both Services
+
+**auth-service/.env**:
+
+```env
+PORT=4000
+MONGODB_URI=mongodb://localhost:27017/auth_db
+JWT_SECRET=your_super_secret_jwt_key_change_in_production
+NODE_ENV=development
+```
+
+**server/.env**:
+
+```env
+PORT=3000
+MONGODB_URI=mongodb://localhost:27017/real_estate_db
+JWT_SECRET=your_super_secret_jwt_key_change_in_production  # MUST MATCH auth-service!
+NODE_ENV=development
+```
+
+⚠️ **CRITICAL**: `JWT_SECRET` must be identical in both services for local verification to work!
+
+---
+
+## � Authentication Flow Diagrams
+
+### 1. Signup Flow
+
+```mermaid
+sequenceDiagram
+    participant Client
+    participant AuthService
+    participant Database
+
+    Client->>AuthService: POST /auth/signup<br/>{userName, email, password}
+    AuthService->>AuthService: Validate input
+    AuthService->>Database: Check if user exists
+    Database-->>AuthService: User not found ✓
+    AuthService->>AuthService: Hash password (bcrypt, 12 rounds)
+    AuthService->>Database: Create new user
+    Database-->>AuthService: User created
+    AuthService->>Client: Return user data (201)
+    Note over Client: navigate to login
+```
+
+### 2. Login Flow
+
+```mermaid
+sequenceDiagram
+    participant Client
+    participant AuthService
+    participant Database
+
+    Client->>AuthService: POST /auth/login<br/>{email, password}
+    AuthService->>Database: Find user by email
+    Database-->>AuthService: User found
+    AuthService->>AuthService: Compare password with bcrypt
+    alt Password invalid
+        AuthService->>Client: 401 Invalid credentials
+    else Password valid
+        AuthService->>AuthService: Generate access token (15min)
+        AuthService->>AuthService: Generate refresh token (7 days)
+        AuthService->>AuthService: Hash refresh token (bcrypt, 10 rounds)
+        AuthService->>Database: Save hashed refresh token
+        Database-->>AuthService: Token saved
+        AuthService->>Client: Set httpOnly cookies<br/>(accessToken, refreshToken)
+        AuthService->>Client: Return user data (200)
+    end
+    Note over Client: navigate to Home page
+
+```
+
+### 3. Refresh Token Flow
+
+```mermaid
+sequenceDiagram
+    participant Client
+    participant AuthService
+    participant Database
+
+    Note over Client: Access token expired (15min)
+    Client->>AuthService: POST /auth/refresh<br/>(refreshToken cookie)
+    AuthService->>AuthService: Verify JWT signature
+    alt JWT invalid or expired
+        AuthService->>Client: 401 Invalid/expired token
+    else JWT valid
+        AuthService->>Database: Find refresh tokens for user
+        Database-->>AuthService: Return tokens
+        AuthService->>AuthService: Compare with bcrypt
+        alt Token not found in DB
+            AuthService->>Client: 401 Invalid refresh token
+        else Token found
+            AuthService->>AuthService: Check expiration date
+            alt Token expired
+                AuthService->>Database: Delete expired token
+                AuthService->>Client: 401 Token expired
+            else Token valid
+                AuthService->>AuthService: Generate NEW access token (15min)
+                AuthService->>Client: Set new accessToken cookie
+                AuthService->>Client: 200 Token refreshed
+                Note over Client: Continue with new access token
+            end
+        end
+    end
+```
+
+### 4. Protected CRUD Operations with Middleware
+
+```mermaid
+sequenceDiagram
+    participant Client
+    participant Server
+    participant Middleware
+    participant Controller
+    participant Database
+
+    Client->>Server: GET/POST/PUT/DELETE /api/resource<br/>(accessToken cookie)
+    Server->>Middleware: requireAuth()
+    Middleware->>Middleware: Extract accessToken from cookie
+    alt No token
+        Middleware->>Client: 401 Authentication required
+    else Token exists
+        Middleware->>Middleware: jwt.verify(token, JWT_SECRET)
+        alt Token invalid
+            Middleware->>Client: 401 Invalid token
+        else Token expired
+            Middleware->>Client: 401 Token expired
+        else Token valid
+            Middleware->>Middleware: Extract userId from payload
+            Middleware->>Middleware: Attach userId to request
+            Middleware->>Controller: next() - Continue to controller
+            Controller->>Database: Perform CRUD operation
+            Database-->>Controller: Operation result
+            Controller->>Client: 200 Success with data
+        end
+    end
+
+    Note over Client: If 401, auto-refresh interceptor<br/>calls /auth/refresh and retries
+```
+
+---
+
+## �📖 How It Works
 
 ### **Step 1: User Logs In**
 
@@ -274,25 +441,53 @@ api.interceptors.response.use(
 
 ## 🔒 Security Features
 
-### **1. httpOnly Cookies**
+### ✅ Currently Implemented
 
-- JavaScript **cannot access** the tokens
-- Protects against **XSS attacks**
+1. **httpOnly cookies** - JavaScript cannot access tokens, prevents XSS attacks
+2. **Short-lived access tokens** - 15 minutes limits exposure window
+3. **Long-lived refresh tokens** - 7 days, stored hashed in DB with bcrypt
+4. **Password hashing** - bcrypt with 12 rounds for user passwords
+5. **Refresh token hashing** - bcrypt with 10 rounds before DB storage
+6. **Token expiration** - Automatic JWT expiration checking
+7. **Secure cookies in production** - `secure: true` when NODE_ENV=production
+8. **Database storage** - Can revoke refresh tokens anytime, logout actually works
 
-### **2. Hashed Refresh Tokens**
+### 🔒 Additional Recommendations for Production
 
-- Stored with **bcrypt** in database
-- If database is hacked, tokens are **useless**
+1. **Change JWT_SECRET**: Generate a strong random secret
 
-### **3. Short-lived Access Tokens**
+   ```bash
+   node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
+   ```
 
-- Expire after **15 minutes**
-- Limits damage if stolen
+2. **Use environment-specific secrets**: Different secrets for dev/staging/prod
 
-### **4. Database Storage**
+3. **Enable CORS properly**: Whitelist only trusted origins
 
-- Can **revoke** refresh tokens anytime
-- Logout **actually works**
+   ```typescript
+   app.use(
+     cors({
+       origin: process.env.CLIENT_URL,
+       credentials: true,
+     })
+   );
+   ```
+
+4. **Add rate limiting**: Prevent brute force attacks
+
+   ```typescript
+   import rateLimit from 'express-rate-limit';
+
+   const loginLimiter = rateLimit({
+     windowMs: 15 * 60 * 1000, // 15 minutes
+     max: 5, // 5 attempts
+   });
+
+   app.post('/auth/login', loginLimiter, login);
+   ```
+
+5. **Monitor token usage**: Log suspicious activity
+6. **Implement token blacklist** (optional): For critical cases where immediate revocation is needed
 
 ---
 
@@ -344,6 +539,30 @@ curl -X POST http://localhost:3000/auth/logout -b cookies.txt
 
 ---
 
+## 🔧 Troubleshooting
+
+### "Invalid token" errors
+
+1. **Check JWT_SECRET matches**: Both auth-service and server must use the same secret
+2. **Check token expiration**: Access tokens expire after 15 minutes
+3. **Try refreshing token**: Use `/auth/refresh` endpoint
+4. **Clear cookies and re-login**: Start fresh
+
+### "Authentication required" errors
+
+1. **Check cookies are being sent**: Browser must include credentials
+2. **Check CORS settings**: Must allow credentials (`credentials: true`)
+3. **Check cookie domain**: Must match server domain
+
+### Token not refreshing
+
+1. **Check refresh token cookie exists**: Should be named `refreshToken`
+2. **Check refresh token not expired**: Valid for 7 days
+3. **Check database has token**: Look in RefreshToken collection
+4. **Check auto-refresh interceptor**: Verify `api.ts` interceptor is configured
+
+---
+
 ## 💡 Learning Exercises
 
 ### **Beginner**
@@ -374,9 +593,60 @@ curl -X POST http://localhost:3000/auth/logout -b cookies.txt
 
 ---
 
+## 🔮 Future Considerations
+
+### When to Switch to Centralized Verification
+
+Consider switching from local to centralized token verification if you need:
+
+1. **Immediate token revocation** - Cannot wait 15 minutes for expiration
+2. **Multiple services (5+)** - Many services need authentication
+3. **Centralized audit logs** - Track all auth events in one place
+4. **Advanced security features** - IP filtering, device tracking, geolocation checks
+5. **Different teams** - Each team manages their own service independently
+
+### Migration Path
+
+If you decide to switch later:
+
+1. Create a centralized `/verify-token` endpoint in auth-service
+2. Update `requireAuth` middleware to call auth-service instead of local verification
+3. Implement caching layer (Redis) to minimize network calls
+4. Add circuit breaker pattern for fault tolerance
+5. Keep fallback to local verification if auth-service is down
+
+---
+
 ## 🎓 Next Steps
 
 1. ✅ Read through `AuthControllers.ts` - understand each step
 2. ✅ Test login/logout flow in the browser
 3. ✅ Examine the auto-refresh interceptor in `api.ts`
 4. ✅ Try the exercises above to deepen understanding
+5. ✅ Review environment variables and ensure JWT_SECRET matches
+
+---
+
+## 📂 Key Files Reference
+
+### Backend Core
+
+- `auth-service/src/controllers/AuthControllers.ts` - Authentication logic
+- `auth-service/src/middlewares/auth.ts` - Auth middleware for auth-service
+- `auth-service/src/routes/AuthRoutes.ts` - Auth endpoints
+- `server/src/middlewares/auth.ts` - Auth middleware for main server
+- `server/src/controllers/AuthControllers.ts` - Server auth logic
+- `server/src/models/RefreshToken.ts` - Refresh token database model
+
+### Frontend Core
+
+- `client/src/utils/api.ts` - Axios instance with auto-refresh interceptor
+- `client/src/utils/authApi.ts` - Auth-specific API calls
+- `client/src/pages/Login.tsx` - Login form
+- `client/src/pages/Signup.tsx` - Signup form
+- `client/src/components/Nav.tsx` - Navigation with auth state
+
+---
+
+**Last Updated**: October 22, 2025  
+**Architecture**: Microservices with Local JWT Verification

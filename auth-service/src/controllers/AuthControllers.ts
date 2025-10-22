@@ -79,7 +79,7 @@ export const login = async (req: Request, res: Response) => {
  */
 export const signup = async (req: Request, res: Response) => {
   try {
-    const { userName, email, password, image } = req.body;
+    const { userName, email, password } = req.body;
 
     if (!userName || !email || !password) {
       return res.status(400).json({
@@ -99,7 +99,6 @@ export const signup = async (req: Request, res: Response) => {
     const newUser = new User({
       userName,
       email,
-      image,
       password: hashedPassword,
     });
 
@@ -141,9 +140,9 @@ export const signup = async (req: Request, res: Response) => {
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
-    const { _id, userName: name, image: img, createdAt, updatedAt } = savedUser;
+    const { _id, userName: name, createdAt, updatedAt } = savedUser;
     return res.status(201).json({
-      user: { _id, userName: name, email, image: img, createdAt, updatedAt },
+      user: { _id, userName: name, email, createdAt, updatedAt },
     });
   } catch (error) {
     console.error('Signup error:', error);
@@ -278,39 +277,4 @@ export const logout = async (req: Request, res: Response) => {
   });
 
   res.status(200).json({ message: 'Logged out successfully' });
-};
-
-/**
- * Verify Token (for inter-service communication)
- */
-export const verifyToken = async (req: Request, res: Response) => {
-  const token =
-    req.headers.authorization?.replace('Bearer ', '') ||
-    req.cookies?.accessToken;
-
-  if (!token) {
-    return res.status(401).json({
-      valid: false,
-      message: 'No token provided',
-    });
-  }
-
-  try {
-    const jwtSecret = process.env.JWT_SECRET || 'devsecret';
-    const payload = jwt.verify(token, jwtSecret) as { userId: string };
-
-    // Optionally fetch user data
-    const user = await User.findById(payload.userId).select('-password');
-
-    return res.json({
-      valid: true,
-      userId: payload.userId,
-      user,
-    });
-  } catch (error) {
-    return res.status(401).json({
-      valid: false,
-      message: 'Invalid token',
-    });
-  }
 };
