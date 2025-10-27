@@ -79,6 +79,26 @@ components:
           type: string
           example: 'https://res.cloudinary.com/demo/image/upload/sample.jpg'
           description: The processed image URL (typically from Cloudinary)
+        owner:
+          oneOf:
+            - type: string
+              format: objectid
+              example: '507f1f77bcf86cd799439011'
+              description: The ID of the user who created the listing
+            - type: object
+              properties:
+                _id:
+                  type: string
+                  format: objectid
+                userName:
+                  type: string
+                email:
+                  type: string
+                  format: email
+                image:
+                  type: string
+              required: [_id, userName, email]
+              description: Populated user object when using populate
         createdAt:
           type: string
           format: date-time
@@ -93,6 +113,7 @@ components:
         - _id
         - title
         - price
+        - owner
         - createdAt
         - updatedAt
       description: Complete listing object as stored in database

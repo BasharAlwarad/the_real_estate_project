@@ -12,10 +12,21 @@ interface User {
   createdAt?: string;
 }
 
+interface UserListing {
+  _id: string;
+  title: string;
+  price: number;
+  image?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 const User = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
+  const [userListings, setUserListings] = useState<UserListing[]>([]);
+  const [isLoadingListings, setIsLoadingListings] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>('');
 
@@ -65,7 +76,35 @@ const User = () => {
       }
     };
 
+    const fetchUserListings = async (): Promise<void> => {
+      if (!id) return;
+
+      try {
+        setIsLoadingListings(true);
+        // Fetch all listings and filter by owner on the client side
+        // Or create a server endpoint like GET /users/:id/listings
+        const { data } = await api.get('/listings');
+        // Filter listings where owner._id matches user id
+        const filteredListings = data.data.filter(
+          (listing: UserListing & { owner: string | { _id: string } }) => {
+            const ownerId =
+              typeof listing.owner === 'object'
+                ? listing.owner._id
+                : listing.owner;
+            return ownerId === id;
+          }
+        );
+        setUserListings(filteredListings);
+      } catch (error) {
+        console.error('Error fetching user listings:', error);
+        // Don't set error for listings, just log it
+      } finally {
+        setIsLoadingListings(false);
+      }
+    };
+
     fetchUserData();
+    fetchUserListings();
   }, [id]);
 
   // Handle opening edit modal
@@ -646,6 +685,137 @@ const User = () => {
                 </Link>
               </div>
             </div>
+          </div>
+        </div>
+
+        {/* User's Listings Section */}
+        <div className="card bg-base-100 shadow-2xl border border-base-300/20 mt-8">
+          <div className="card-body">
+            <h2 className="text-2xl font-bold text-base-content flex items-center gap-2 mb-6">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-6 w-6 text-primary"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"
+                />
+              </svg>
+              {user.userName}'s Properties
+              <span className="badge badge-primary badge-lg ml-2">
+                {userListings.length}
+              </span>
+            </h2>
+
+            {isLoadingListings ? (
+              <div className="text-center py-8">
+                <span className="loading loading-spinner loading-lg"></span>
+                <p className="mt-4 text-base-content/70">
+                  Loading properties...
+                </p>
+              </div>
+            ) : userListings.length === 0 ? (
+              <div className="text-center py-12">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-20 w-20 mx-auto text-base-content/30 mb-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={1}
+                    d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"
+                  />
+                </svg>
+                <p className="text-base-content/50 text-lg">
+                  No properties listed yet
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {userListings.map((listing) => (
+                  <div
+                    key={listing._id}
+                    className="card bg-base-200 shadow-lg hover:shadow-xl transition-all duration-300 border border-base-300/20"
+                  >
+                    {listing.image ? (
+                      <figure className="relative overflow-hidden">
+                        <img
+                          src={listing.image}
+                          alt={listing.title}
+                          className="w-full h-48 object-cover transition-transform duration-300 hover:scale-110"
+                        />
+                      </figure>
+                    ) : (
+                      <figure className="bg-gradient-to-br from-base-300 to-base-200 h-48 flex items-center justify-center">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-12 w-12 text-base-content/30"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={1}
+                            d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                          />
+                        </svg>
+                      </figure>
+                    )}
+                    <div className="card-body p-4">
+                      <h3 className="card-title text-lg line-clamp-2">
+                        {listing.title}
+                      </h3>
+                      <div className="badge badge-secondary badge-lg">
+                        {new Intl.NumberFormat('en-US', {
+                          style: 'currency',
+                          currency: 'USD',
+                          maximumFractionDigits: 0,
+                        }).format(listing.price)}
+                      </div>
+                      <div className="card-actions justify-end mt-2">
+                        <Link
+                          to={`/listing/${listing._id}`}
+                          className="btn btn-primary btn-sm gap-2"
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-4 w-4"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                            />
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                            />
+                          </svg>
+                          View Details
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>

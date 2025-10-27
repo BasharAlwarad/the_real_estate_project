@@ -45,4 +45,24 @@ const UserSchema: Schema = new Schema(
   }
 );
 
+// Virtual relation: all listings created by this user
+UserSchema.virtual('listings', {
+  ref: 'Home', // Model name used for listings
+  localField: '_id',
+  foreignField: 'owner',
+});
+
+// Optional: Cascade delete user's listings when the user is removed
+UserSchema.pre('findOneAndDelete', async function (next) {
+  try {
+    const doc = await this.model.findOne(this.getFilter());
+    if (doc) {
+      await mongoose.model('Home').deleteMany({ owner: doc._id });
+    }
+    next();
+  } catch (err) {
+    next(err as any);
+  }
+});
+
 export const User = mongoose.model<IUser>('User', UserSchema);

@@ -51,6 +51,10 @@ export const listingSchema = z
   .object({
     _id: z.instanceof(Types.ObjectId),
     ...listingCreateSchema.shape, // Use create schema shape to ensure all required fields exist
+    owner: z.union([
+      z.instanceof(Types.ObjectId),
+      z.string(), // when serialized to JSON
+    ]),
     createdAt: z.date(),
     updatedAt: z.date(),
   })

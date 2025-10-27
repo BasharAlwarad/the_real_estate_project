@@ -1,13 +1,23 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import api from '../utils/api';
+import { getUser } from '../utils/auth';
 
 // Types
+interface Owner {
+  _id: string;
+  userName: string;
+  email: string;
+  image?: string;
+}
+
 interface HouseListing {
   _id: string;
   title: string;
   price: number;
   image?: string;
+  owner?: Owner | string; // Can be populated object or just ID
 }
 
 interface FormData {
@@ -17,7 +27,9 @@ interface FormData {
 }
 
 const Home = () => {
+  const navigate = useNavigate();
   const [listings, setListings] = useState<HouseListing[]>([]);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [showInsertForm, setShowInsertForm] = useState<boolean>(false);
   const [showUpdateForm, setShowUpdateForm] = useState<boolean>(false);
   const [selectedListing, setSelectedListing] = useState<HouseListing | null>(
@@ -42,17 +54,55 @@ const Home = () => {
     setListings(data.data);
   };
 
+  // Check authentication status
+  const checkAuth = async (): Promise<void> => {
+    const user = await getUser();
+    setIsAuthenticated(!!user);
+  };
+
+  // Handle add listing button click
+  const handleAddListingClick = (): void => {
+    if (!isAuthenticated) {
+      if (
+        confirm('You must be logged in to create a listing. Go to login page?')
+      ) {
+        navigate('/login');
+      }
+      return;
+    }
+    setShowInsertForm(true);
+  };
+
   // Create listing
   const createListing = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
-    await api.post('/listings', {
-      ...insertFormData,
-      price: parseFloat(insertFormData.price),
-    });
+    try {
+      await api.post('/listings', {
+        ...insertFormData,
+        price: parseFloat(insertFormData.price),
+      });
 
-    setInsertFormData({ title: '', price: '', image: '' });
-    setShowInsertForm(false);
-    fetchListings();
+      setInsertFormData({ title: '', price: '', image: '' });
+      setShowInsertForm(false);
+      fetchListings();
+    } catch (error) {
+      console.error('Error creating listing:', error);
+      if (axios.isAxiosError(error)) {
+        const status = error.response?.status;
+        const errorMessage = error.response?.data?.message || error.message;
+
+        if (status === 401) {
+          alert(
+            'You must be logged in to create a listing. Redirecting to login...'
+          );
+          navigate('/login');
+        } else {
+          alert(`Failed to create listing: ${errorMessage}`);
+        }
+      } else {
+        alert('Failed to create listing. Please try again.');
+      }
+    }
   };
 
   // Update listing
@@ -87,6 +137,7 @@ const Home = () => {
 
   useEffect(() => {
     fetchListings();
+    checkAuth();
   }, []);
 
   const formatPrice = (price: number): string => {
@@ -119,7 +170,7 @@ const Home = () => {
               <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
                 <button
                   className="btn btn-primary btn-lg gap-2 shadow-lg hover:shadow-xl transition-all duration-300"
-                  onClick={() => setShowInsertForm(true)}
+                  onClick={handleAddListingClick}
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -247,7 +298,7 @@ const Home = () => {
               </p>
               <button
                 className="btn btn-primary gap-2"
-                onClick={() => setShowInsertForm(true)}
+                onClick={handleAddListingClick}
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"

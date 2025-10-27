@@ -20,11 +20,14 @@ export const getAllListings: ListingController<
   never,
   ApiResponse<ListingResponse[]>
 > = async (req, res) => {
-  const listings = await Listing.find({});
+  const listings = await Listing.find({}).populate({
+    path: 'owner',
+    select: 'userName email image',
+  });
   res.json({
     success: true,
     message: 'Listings retrieved successfully',
-    data: listings as ListingResponse[],
+    data: listings as unknown as ListingResponse[],
   });
 };
 
@@ -38,7 +41,10 @@ export const getListingById: ListingController<
     httpErrors.badRequest('Invalid listing ID');
   }
 
-  const listing = await Listing.findById(id);
+  const listing = await Listing.findById(id).populate({
+    path: 'owner',
+    select: 'userName email image',
+  });
 
   if (!listing) {
     httpErrors.notFound('Listing not found');
@@ -47,7 +53,7 @@ export const getListingById: ListingController<
   res.json({
     success: true,
     message: 'Listing retrieved successfully',
-    data: listing as ListingResponse,
+    data: listing as unknown as ListingResponse,
   });
 };
 
@@ -59,13 +65,23 @@ export const createListing: ListingController<
     httpErrors.unprocessableEntity('Request body cannot be empty');
   }
 
-  const newListing = new Listing(req.body);
+  const ownerId = (req as any).userId as string | undefined;
+  if (!ownerId) {
+    httpErrors.unauthorized('Authentication required');
+  }
+
+  const newListing = new Listing({ ...req.body, owner: ownerId });
   const savedListing = await newListing.save();
+
+  await savedListing.populate({
+    path: 'owner',
+    select: 'userName email image',
+  });
 
   res.status(201).json({
     success: true,
     message: 'Listing created successfully',
-    data: savedListing as ListingResponse,
+    data: savedListing as unknown as ListingResponse,
   });
 };
 
@@ -74,7 +90,10 @@ export const updateListing: ListingController<
   ApiResponse<ListingResponse>
 > = async (req, res) => {
   const { id } = req.params;
-  const updates = req.body;
+  const updates = { ...req.body } as any;
+
+  // Prevent owner from being updated via this endpoint
+  if ('owner' in updates) delete (updates as any).owner;
 
   if (!id || !mongoose.Types.ObjectId.isValid(id)) {
     httpErrors.badRequest('Invalid listing ID');
@@ -89,12 +108,12 @@ export const updateListing: ListingController<
   const updatedListing = await Listing.findByIdAndUpdate(id, updates, {
     new: true,
     runValidators: true,
-  });
+  }).populate({ path: 'owner', select: 'userName email image' });
 
   res.json({
     success: true,
     message: 'Listing updated successfully',
-    data: updatedListing as ListingResponse,
+    data: updatedListing as unknown as ListingResponse,
   });
 };
 
@@ -117,6 +136,6 @@ export const deleteListing: ListingController<
   res.json({
     success: true,
     message: 'Listing deleted successfully',
-    data: deletedListing as ListingResponse,
+    data: deletedListing as unknown as ListingResponse,
   });
 };

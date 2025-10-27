@@ -1,5 +1,5 @@
-export const throwHttpError = (message, status = 500) => {
-  const error = new Error(message) as Error & { cause?: { status } };
+export const throwHttpError = (message: string, status: number = 500) => {
+  const error = new Error(message) as Error & { cause?: { status: number } };
   error.cause = { status };
   throw error;
 };

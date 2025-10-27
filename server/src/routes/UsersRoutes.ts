@@ -11,6 +11,7 @@ import {
   cloudUploader,
   formMiddleWare,
   requireAuth,
+  isUserOwner,
 } from '#middlewares';
 import { userCreateSchema, userUpdateSchema } from '#schemas';
 
@@ -34,9 +35,10 @@ userRouter
   .get(getUserById)
   .put(
     requireAuth,
+    isUserOwner,
     formMiddleWare,
     cloudUploader,
     validateBodyZod(userUpdateSchema),
     updateUser
   )
-  .delete(requireAuth, deleteUser);
+  .delete(requireAuth, isUserOwner, deleteUser);

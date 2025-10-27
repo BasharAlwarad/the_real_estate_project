@@ -1,9 +1,10 @@
-import mongoose, { Document, Schema } from 'mongoose';
+import mongoose, { Document, Schema, Types } from 'mongoose';
 
 interface IListing extends Document {
   title: string;
   price: number;
   image: string;
+  owner: Types.ObjectId; // reference to User
   createdAt: Date;
   updatedAt: Date;
 }
@@ -22,6 +23,12 @@ const ListingSchema: Schema = new Schema(
     },
     image: {
       type: String,
+    },
+    owner: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+      index: true,
     },
   },
   {

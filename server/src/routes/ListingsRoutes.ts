@@ -6,7 +6,7 @@ import {
   updateListing,
   deleteListing,
 } from '#controllers';
-import { validateBodyZod, requireAuth } from '#middlewares';
+import { validateBodyZod, requireAuth, isListingOwner } from '#middlewares';
 import { listingCreateSchema, listingUpdateSchema } from '#schemas';
 
 export const listingRouter = Router();
@@ -19,5 +19,10 @@ listingRouter
 listingRouter
   .route('/:id')
   .get(getListingById)
-  .put(requireAuth, validateBodyZod(listingUpdateSchema), updateListing)
-  .delete(requireAuth, deleteListing);
+  .put(
+    requireAuth,
+    isListingOwner,
+    validateBodyZod(listingUpdateSchema),
+    updateListing
+  )
+  .delete(requireAuth, isListingOwner, deleteListing);

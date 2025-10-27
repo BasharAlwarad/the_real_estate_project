@@ -87,6 +87,7 @@ export interface IListing extends Document {
   title: string;
   price: number;
   image: string;
+  owner: string; // user id reference
   createdAt: Date;
   updatedAt: Date;
 }
@@ -101,13 +102,19 @@ export interface UpdateListingRequest {
   title?: string;
   price?: number;
   image?: string;
+  owner?: string;
 }
+
+export type ListingOwner =
+  | string
+  | Pick<UserResponse, '_id' | 'userName' | 'email' | 'image'>;
 
 export interface ListingResponse {
   _id: string;
   title: string;
   price: number;
   image: string;
+  owner: ListingOwner;
   createdAt: Date;
   updatedAt: Date;
 }
