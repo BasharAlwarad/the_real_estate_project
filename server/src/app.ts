@@ -3,6 +3,7 @@ import cors from 'cors';
 import mongoDbConnect from './db/mongodb.js';
 import usersRouter from './routes/UsersRoutes.js';
 import listingsRouter from './routes/ListingsRoutes.js';
+import errorHandler from './middleware/errorHandler.js';
 
 const app = express();
 const PORT = process.env.PORT;
@@ -10,11 +11,6 @@ const PORT = process.env.PORT;
 // Middleware
 app.use(cors());
 app.use(express.json());
-
-app.use((req, res, next) => {
-  console.log('Hello from app');
-  next();
-});
 
 // Initialize database
 mongoDbConnect();
@@ -27,16 +23,7 @@ app.get('/', (req, res) => {
   }
 });
 
-const somehting=(req, res, next) => {
-    console.log('from the route');
-    next();
-  }
-
-app.use(
-  `/listings`,
-  ,somehting,
-  listingsRouter
-);
+app.use(`/listings`, listingsRouter);
 app.use(`/users`, usersRouter);
 
 // 404 catch-all route - must be last
@@ -46,6 +33,9 @@ app.use(/.*/, (req, res) => {
     message: `The requested endpoint ${req.originalUrl} does not exist`,
   });
 });
+
+// Centralized error handler
+app.use(errorHandler);
 
 app.listen(PORT, () =>
   console.log('server is running 🏃 on http://localhost:3000')
